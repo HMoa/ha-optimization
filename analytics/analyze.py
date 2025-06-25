@@ -10,23 +10,28 @@ def main():
     print("This is the main check for analyze.py")
 
     # Load the production data
+    #production_data = pd.read_csv(
+    #    "analytics/production2024.csv", parse_dates=["time"], sep="\t"
+    #)
     production_data = pd.read_csv(
-        "analytics/production2024.csv", parse_dates=["time"], sep="\t"
+        "PV-power.csv", parse_dates=["_time"], sep=","
     )
 
     # Remove rows where null
-    production_data = production_data.dropna(subset=["time"])
-    production_data = production_data.dropna(subset=["production"])
+    production_data = production_data.dropna(subset=["_time"])
+    #production_data = production_data.dropna(subset=["production"])
+    production_data = production_data.dropna(subset=["_value"])
 
     production_data["minutes_of_day"] = (
-        production_data["time"].dt.hour * 60 + production_data["time"].dt.minute
+        production_data["_time"].dt.hour * 60 + production_data["_time"].dt.minute
     )
-    production_data["day_of_week"] = production_data["time"].dt.dayofweek
-    production_data["week"] = production_data["time"].dt.isocalendar().week
+    production_data["day_of_week"] = production_data["_time"].dt.dayofweek
+    production_data["week"] = production_data["_time"].dt.isocalendar().week
 
     # Define features and target
     X = production_data[["minutes_of_day", "day_of_week", "week"]]
-    y = production_data["production"]
+    #y = production_data["production"]
+    y = production_data["_value"]
 
     # Split the data into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(
