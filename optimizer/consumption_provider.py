@@ -3,7 +3,6 @@ from datetime import datetime
 
 def get_consumption(start_date: datetime, end_date: datetime):
     from datetime import timedelta
-    from random import randint
 
     # Snap start_date to the closest 5-minute interval
     start_date = start_date - timedelta(

@@ -1,17 +1,19 @@
+import os
+import pickle
 from datetime import datetime, timedelta
 
 from battery_config import BatteryConfig
 from battery_connection import set_battery_in_state
+from consumption_provider import get_consumption
 from elpris_api import fetch_electricity_prices
+from production_provider import get_production
 from solver import Solver
-
-from optimizer.consumption_provider import get_consumption
-from optimizer.production_provider import get_production
 
 
 class BatteryOptimizerWorkflow:
-    def __init__(self):
+    def __init__(self, battery_percent: int = 5):
         self.config = BatteryConfig.default_config()
+        self.config.initial_energy = battery_percent * self.config.storage_size_wh / 100
         self.solver = Solver()
         self.schedule = None
 
@@ -25,9 +27,8 @@ class BatteryOptimizerWorkflow:
         current_schedule_item = self.schedule[current_slot_time]
         if (
             abs(current_schedule_item.battery_expected_soc - self.config.initial_energy)
-            > 5
+            > 2
         ):
-            # Handle the case where the state of charge is more than 5 different from the expected value
             self.generate_schedule()
         else:
             print("Schedule is valid, executing")
@@ -48,7 +49,38 @@ class BatteryOptimizerWorkflow:
             production, consumption, prices, self.config
         )
 
-        # self.run_daily(self.calculate_consumption, "00:05:00")  # Runs daily at 12:05 AM
+        params = [production, consumption, prices, self.config]
+
+        sample_data_dir = os.path.join(os.path.dirname(__file__), "../sample_data")
+        os.makedirs(sample_data_dir, exist_ok=True)
+        sample_data_path = os.path.join(sample_data_dir, "optimizer_params.pkl")
+        with open(sample_data_path, "wb") as f:
+            pickle.dump(params, f)
+
+        schedule = self.solver.create_schedule(*params)
+        if schedule is None:
+            print("No schedule found")
+            return
+
+        self.schedule = schedule
+
+    def generate_schedule_from_file(self):
+        sample_data_dir = os.path.join(os.path.dirname(__file__), "../sample_data")
+        sample_data_path = os.path.join(sample_data_dir, "optimizer_params.pkl")
+        if not os.path.exists(sample_data_path):
+            print("Sample data file does not exist.")
+            return None
+
+        with open(sample_data_path, "rb") as f:
+            loaded_params = pickle.load(f)
+
+        schedule = self.solver.create_schedule(*loaded_params)
+        if schedule is None:
+            print("No schedule found from file data")
+            return None
+
+        self.schedule = schedule
+        return schedule
 
     def get_current_timeslot(self):
         now = datetime.now().astimezone()
@@ -59,41 +91,6 @@ class BatteryOptimizerWorkflow:
         )
 
         return start_date
-
-    def calculate_consumption(self, kwargs):
-        now = datetime.now()
-        start_time = (now - timedelta(days=1)).isoformat()
-        end_time = now.isoformat()
-
-        # Fetch history data
-        solar_history = self.get_history(
-            "sensor.solar_production", start_time=start_time, end_time=end_time
-        )
-        grid_history = self.get_history(
-            "sensor.grid_import", start_time=start_time, end_time=end_time
-        )
-        battery_history = self.get_history(
-            "sensor.battery_discharge", start_time=start_time, end_time=end_time
-        )
-
-        # Process data in 5-minute slots
-        report = []
-        time_intervals = self.generate_time_slots(
-            now - timedelta(days=1), now, minutes=5
-        )
-
-        for t in time_intervals:
-            solar = self.get_nearest_value(solar_history, t)
-            grid = self.get_nearest_value(grid_history, t)
-            battery = self.get_nearest_value(battery_history, t)
-
-            consumption = float(grid) + float(battery) + float(solar)
-            report.append({"time": t, "consumption": consumption})
-
-        # Log or store results
-        self.log("Energy Report (last 24h, 5-min slots):")
-        for entry in report:
-            self.log(f"{entry['time']}: {entry['consumption']} kW")
 
     def generate_time_slots(self, start, end, minutes=5):
         """Generate time slots in 5-minute intervals"""
