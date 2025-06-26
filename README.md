@@ -9,7 +9,7 @@ This takes some inspiration from:
 
 ## Todo
 
-- [ ] Get sample data for production
+- [x] Get sample data for production
   -- production per 5min?
   -- Cloud coverage
   -- Make prediction model

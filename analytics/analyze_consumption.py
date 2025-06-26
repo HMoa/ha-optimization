@@ -7,17 +7,13 @@ from sklearn.model_selection import train_test_split
 
 
 def main():
-    print("This is the main check for analyze.py")
+    print("This is the main check for analyze_consumption.py")
 
     # Load the production data
-    # production_data = pd.read_csv(
-    #    "analytics/production2024.csv", parse_dates=["time"], sep="\t"
-    # )
-    production_data = pd.read_csv("PV-power.csv", parse_dates=["time"], sep=",")
+    production_data = pd.read_csv("consumed-power.csv", parse_dates=["time"], sep=",")
 
     # Remove rows where null
     production_data = production_data.dropna(subset=["time"])
-    # production_data = production_data.dropna(subset=["production"])
     production_data = production_data.dropna(subset=["value"])
 
     production_data["minutes_of_day"] = (
@@ -31,7 +27,6 @@ def main():
     # y = production_data["production"]
     y = production_data["value"]
 
-    # Split the data into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
@@ -42,7 +37,7 @@ def main():
 
     import joblib
 
-    joblib.dump(model, "pv_production_rf_model.joblib")
+    joblib.dump(model, "power-consumption.joblib")
 
     # Make predictions
     y_pred = model.predict(X_test)

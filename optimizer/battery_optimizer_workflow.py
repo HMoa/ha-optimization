@@ -2,10 +2,11 @@ from datetime import datetime, timedelta
 
 from battery_config import BatteryConfig
 from battery_connection import set_battery_in_state
-from consumption_provider_mock import get_consumption
 from elpris_api import fetch_electricity_prices
-from production_provider_mock import get_production
 from solver import Solver
+
+from optimizer.consumption_provider import get_consumption
+from optimizer.production_provider import get_production
 
 
 class BatteryOptimizerWorkflow:

@@ -1,7 +1,4 @@
-#group,false,false,true,true,false,false,true,true
-#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,double,string,string
-#default,_result,,,,,,,
-,result,table,_start,_stop,_time,_value,_field,_measurement
+,result,table,_start,_stop,time,value,_field,_measurement
 ,,0,2025-05-21T20:33:27.714347914Z,2025-06-20T20:33:27.714347914Z,2025-06-07T21:11:27Z,2419.8625,value,power.consumed
 ,,0,2025-05-21T20:33:27.714347914Z,2025-06-20T20:33:27.714347914Z,2025-06-07T21:12:27Z,2441.777,value,power.consumed
 ,,0,2025-05-21T20:33:27.714347914Z,2025-06-20T20:33:27.714347914Z,2025-06-07T21:13:27Z,2451.7143,value,power.consumed
@@ -18675,4 +18672,3 @@
 ,,0,2025-05-21T20:33:27.714347914Z,2025-06-20T20:33:27.714347914Z,2025-06-20T20:31:04Z,7663.5837,value,power.consumed
 ,,0,2025-05-21T20:33:27.714347914Z,2025-06-20T20:33:27.714347914Z,2025-06-20T20:32:04Z,9974.1154,value,power.consumed
 ,,0,2025-05-21T20:33:27.714347914Z,2025-06-20T20:33:27.714347914Z,2025-06-20T20:33:04Z,9743.8043,value,power.consumed
-
