@@ -9,15 +9,18 @@ This takes some inspiration from:
 
 ## Todo
 
-- [x] Get sample data for production
-  -- production per 5min?
-  -- Cloud coverage
-  -- Make prediction model
+- [x] Cloud coverage in model (failed, it sucked)
+- [x] Make prediction model
+- [x] Create better mocks for production / consumption
+- [ ] Improve consumption model (prev values? other features?)
 - [ ] Test API for production forecast
   -- <https://openweathermap.org/api/solar-panels-and-energy-prediction>
-  -- Compare with cloud coverage
+- [ ] Compare with cloud coverage
+- [ ] Split up tasks: fetch data, generate models, generate schedule
 
-- [x] Create better mocks for production / consumption
-- [ ] Create code to set the battery mode
-- [ ] Test with a running home assistant - docker
-- [ ] Test run on a Rpi
+## Operational stuff
+
+- [ ] Node-red: Create code to set the battery mode
+- [ ] Node-red: Fetch current schedule item mode
+- [ ] Test with a running home assistant - docker on machine?
+- [ ] Test run on a Rpi (check speed of solver)

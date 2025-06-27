@@ -6,8 +6,6 @@ import json
 import sys
 
 import matplotlib
-
-# matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from battery_optimizer_workflow import BatteryOptimizerWorkflow
 
@@ -107,7 +105,7 @@ def plot_consumption():
 
     from consumption_provider import get_consumption
 
-    start_date = datetime(2025, 6, 28, 0, 0, 0)  # 1st of June 2025
+    start_date = datetime(2025, 6, 18, 0, 0, 0)  # 1st of June 2025
     consumption = get_consumption(start_date, start_date + timedelta(days=1))
 
     fig, ax1 = plt.subplots()
@@ -118,8 +116,25 @@ def plot_consumption():
     plt.show()
 
 
+def plot_production():
+    from datetime import datetime, timedelta
+
+    from production_provider import get_production
+
+    start_date = datetime(2025, 6, 28, 0, 0, 0)  # 1st of June 2025
+    production = get_production(start_date, start_date + timedelta(days=1))
+
+    fig, ax1 = plt.subplots()
+    ax1.plot(production.keys(), production.values(), label="Production")
+    ax1.set_ylabel("Production")
+    ax1.set_xlabel("Time")
+    ax1.legend(loc="upper left")
+    plt.show()
+
+
 if __name__ == "__main__":
     # This ensures that the main() function is called only when this script is run directly
     # (not when imported as a module)
-    sys.exit(main())
+    # sys.exit(main())
     # sys.exit(plot_consumption())
+    sys.exit(plot_production())

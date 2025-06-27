@@ -42,7 +42,7 @@ def main():
 
     import joblib
 
-    joblib.dump(model, "pv_production_rf_model.joblib")
+    joblib.dump(model, "pv_production.joblib")
 
     # Make predictions
     y_pred = model.predict(X_test)
