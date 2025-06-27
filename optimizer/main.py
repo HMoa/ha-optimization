@@ -47,8 +47,6 @@ def main():
     with open("schedule.json", "w") as f:
         json.dump(schedule_json, f, indent=2)
 
-    print("Schedule saved to schedule.json")
-
     fig, ax1 = plt.subplots()
 
     # Plot battery_flow and house_consumption on the left y-axis
@@ -61,6 +59,12 @@ def main():
         schedule.keys(),
         [item.house_consumption for item in schedule.values()],
         label="House Consumption",
+    )
+    ax1.plot(
+        schedule.keys(),
+        [item.grid_flow for item in schedule.values()],
+        label="Grid Flow",
+        color="tab:purple",
     )
     ax1.set_ylabel("Battery Flow / House Consumption")
     ax1.set_xlabel("Time")

@@ -67,7 +67,6 @@ class Solver:
 
         # Initial energy in the battery
         initial_energy = battery_config.initial_energy
-        print(f"Initial energy solver: {initial_energy}")
 
         # Constraints
         previous_key = None
@@ -111,6 +110,13 @@ class Solver:
 
             previous_key = i
 
+        # End-of-horizon constraint: ensure minimum SOC at the end
+        final_key = list(production_w.keys())[-1]
+        self.solver.Add(
+            battery_energy_wh[final_key]
+            >= battery_config.storage_size_wh * 0.5  # 20% minimum
+        )
+
         # Objective: minimize the cost of grid import
         objective = self.solver.Objective()
         for i in production_w.keys():
@@ -131,62 +137,70 @@ class Solver:
         schedule = {}
         for i in production_w.keys():
             need = self.toWh(consumption_w[i] - production_w[i])
-            flow = (
+            battery_flow = (
                 battery_charge_wh[i].solution_value()
                 - battery_discharge_wh[i].solution_value()
             )
+            grid_flow = (
+                grid_import_wh[i].solution_value() - grid_export_wh[i].solution_value()
+            )
 
-            if flow > 1:
-                if flow <= need + 1:
+            if battery_flow > 1:
+                if battery_flow <= need + 1:
                     schedule[i] = TimeslotItem(
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=flow,
+                        battery_flow=battery_flow,
                         battery_expected_soc=battery_energy_wh[i].solution_value(),
                         house_consumption=need,
                         activity=Activity.SELF_CONSUMPTION,
+                        grid_flow=grid_flow,
                     )
                 else:
                     schedule[i] = TimeslotItem(
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=flow,
+                        battery_flow=battery_flow,
                         battery_expected_soc=battery_energy_wh[i].solution_value(),
                         house_consumption=need,
                         activity=Activity.CHARGE,
-                        amount=flow,
+                        amount=battery_flow,
+                        grid_flow=grid_flow,
                     )
 
-            elif flow < -1:
-                if -flow <= need + 1:
+            elif battery_flow < -1:
+                if -battery_flow <= need + 1:
                     schedule[i] = TimeslotItem(
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=flow,
+                        battery_flow=battery_flow,
                         battery_expected_soc=battery_energy_wh[i].solution_value(),
                         house_consumption=need,
                         activity=Activity.SELF_CONSUMPTION,
-                        amount=flow,
+                        amount=battery_flow,
+                        grid_flow=grid_flow,
                     )
 
                 else:
                     schedule[i] = TimeslotItem(
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=flow,
+                        battery_flow=battery_flow,
                         battery_expected_soc=battery_energy_wh[i].solution_value(),
                         house_consumption=need,
                         activity=Activity.DISCHARGE,
+                        grid_flow=grid_flow,
                     )
 
             else:
                 schedule[i] = TimeslotItem(
                     start_time=i,
                     prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                    battery_flow=flow,
+                    battery_flow=battery_flow,
                     battery_expected_soc=battery_energy_wh[i].solution_value(),
                     house_consumption=need,
                     activity=Activity.IDLE,
+                    grid_flow=grid_flow,
                 )
 
         return schedule

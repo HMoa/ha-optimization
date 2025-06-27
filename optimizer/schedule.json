@@ -1497,7 +1497,7 @@
     "start_time": "2025-06-27T07:50:00+02:00",
     "prices": 0.38779,
     "battery_flow": 191.35633866666666,
-    "battery_expected_soc": 15787.019196754167,
+    "battery_expected_soc": 15787.019196754165,
     "house_consumption": -191.35633866666666,
     "activity": "charge",
     "amount": 191.35633866666666
@@ -1524,7 +1524,7 @@
     "start_time": "2025-06-27T08:05:00+02:00",
     "prices": 0.49896,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 14971.179507875,
+    "battery_expected_soc": 14971.179507874998,
     "house_consumption": 74.7983320833331,
     "activity": "discharge",
     "amount": null
@@ -1568,17 +1568,17 @@
   "2025-06-27T08:30:00+02:00": {
     "start_time": "2025-06-27T08:30:00+02:00",
     "prices": 0.49896,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 13304.512841208332,
+    "battery_flow": -92.35458970833233,
+    "battery_expected_soc": 13212.158251500001,
     "house_consumption": -98.4263760000003,
-    "activity": "idle",
+    "activity": "discharge",
     "amount": null
   },
   "2025-06-27T08:35:00+02:00": {
     "start_time": "2025-06-27T08:35:00+02:00",
     "prices": 0.49896,
     "battery_flow": 0.0,
-    "battery_expected_soc": 13304.512841208332,
+    "battery_expected_soc": 13212.158251500001,
     "house_consumption": -241.63625525000023,
     "activity": "idle",
     "amount": null
@@ -1587,7 +1587,7 @@
     "start_time": "2025-06-27T08:40:00+02:00",
     "prices": 0.49896,
     "battery_flow": 0.0,
-    "battery_expected_soc": 13304.512841208332,
+    "battery_expected_soc": 13212.158251500001,
     "house_consumption": -177.08055733333325,
     "activity": "idle",
     "amount": null
@@ -1596,7 +1596,7 @@
     "start_time": "2025-06-27T08:45:00+02:00",
     "prices": 0.49896,
     "battery_flow": 0.0,
-    "battery_expected_soc": 13304.512841208332,
+    "battery_expected_soc": 13212.158251500001,
     "house_consumption": -279.69345358333385,
     "activity": "idle",
     "amount": null
@@ -1605,7 +1605,7 @@
     "start_time": "2025-06-27T08:50:00+02:00",
     "prices": 0.49896,
     "battery_flow": 0.0,
-    "battery_expected_soc": 13304.512841208332,
+    "battery_expected_soc": 13212.158251500001,
     "house_consumption": -69.53960100000008,
     "activity": "idle",
     "amount": null
@@ -1613,11 +1613,11 @@
   "2025-06-27T08:55:00+02:00": {
     "start_time": "2025-06-27T08:55:00+02:00",
     "prices": 0.49896,
-    "battery_flow": -104.51284120833309,
+    "battery_flow": -12.158251500000263,
     "battery_expected_soc": 13200.0,
     "house_consumption": 12.158251500000251,
-    "activity": "discharge",
-    "amount": null
+    "activity": "self_consumption",
+    "amount": -12.158251500000263
   },
   "2025-06-27T09:00:00+02:00": {
     "start_time": "2025-06-27T09:00:00+02:00",
@@ -2072,35 +2072,35 @@
   "2025-06-27T13:10:00+02:00": {
     "start_time": "2025-06-27T13:10:00+02:00",
     "prices": 0.07519,
-    "battery_flow": -51.38634116666649,
-    "battery_expected_soc": 15361.539742683333,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 15412.92608385,
     "house_consumption": 51.38634116666647,
-    "activity": "self_consumption",
-    "amount": -51.38634116666649
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T13:15:00+02:00": {
     "start_time": "2025-06-27T13:15:00+02:00",
     "prices": 0.07519,
-    "battery_flow": -31.362878583333515,
-    "battery_expected_soc": 15330.1768641,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 15412.92608385,
     "house_consumption": 31.362878583333515,
-    "activity": "self_consumption",
-    "amount": -31.362878583333515
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T13:20:00+02:00": {
     "start_time": "2025-06-27T13:20:00+02:00",
     "prices": 0.07519,
-    "battery_flow": -94.78552608333345,
-    "battery_expected_soc": 15235.391338016667,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 15412.92608385,
     "house_consumption": 94.78552608333344,
-    "activity": "self_consumption",
-    "amount": -94.78552608333345
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T13:25:00+02:00": {
     "start_time": "2025-06-27T13:25:00+02:00",
     "prices": 0.07519,
     "battery_flow": 38.17174449999999,
-    "battery_expected_soc": 15271.654495291667,
+    "battery_expected_soc": 15449.189241125001,
     "house_consumption": -38.171744499999974,
     "activity": "charge",
     "amount": 38.17174449999999
@@ -2109,7 +2109,7 @@
     "start_time": "2025-06-27T13:30:00+02:00",
     "prices": 0.07519,
     "battery_flow": 165.51325424999987,
-    "battery_expected_soc": 15428.892086829166,
+    "battery_expected_soc": 15606.426832662499,
     "house_consumption": -165.51325424999987,
     "activity": "charge",
     "amount": 165.51325424999987
@@ -2118,7 +2118,7 @@
     "start_time": "2025-06-27T13:35:00+02:00",
     "prices": 0.07519,
     "battery_flow": 416.66666666666663,
-    "battery_expected_soc": 15824.7254201625,
+    "battery_expected_soc": 16002.260165995833,
     "house_consumption": -460.5984440000003,
     "activity": "charge",
     "amount": 416.66666666666663
@@ -2127,7 +2127,7 @@
     "start_time": "2025-06-27T13:40:00+02:00",
     "prices": 0.07519,
     "battery_flow": 172.1180856666664,
-    "battery_expected_soc": 15988.237601545832,
+    "battery_expected_soc": 16165.772347379167,
     "house_consumption": -172.11808566666642,
     "activity": "charge",
     "amount": 172.1180856666664
@@ -2136,7 +2136,7 @@
     "start_time": "2025-06-27T13:45:00+02:00",
     "prices": 0.07519,
     "battery_flow": 5.757279916666249,
-    "battery_expected_soc": 15993.707017466666,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": -5.757279916666258,
     "activity": "charge",
     "amount": 5.757279916666249
@@ -2144,26 +2144,26 @@
   "2025-06-27T13:50:00+02:00": {
     "start_time": "2025-06-27T13:50:00+02:00",
     "prices": 0.07519,
-    "battery_flow": -209.44160974999946,
-    "battery_expected_soc": 15784.265407716666,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": 209.44160974999946,
-    "activity": "self_consumption",
-    "amount": -209.44160974999946
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T13:55:00+02:00": {
     "start_time": "2025-06-27T13:55:00+02:00",
     "prices": 0.07519,
-    "battery_flow": -193.94908874999985,
-    "battery_expected_soc": 15590.316318966667,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": 193.9490887499998,
-    "activity": "self_consumption",
-    "amount": -193.94908874999985
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T14:00:00+02:00": {
     "start_time": "2025-06-27T14:00:00+02:00",
     "prices": 0.04618,
     "battery_flow": 0.0,
-    "battery_expected_soc": 15590.316318966667,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": 249.7536831666669,
     "activity": "idle",
     "amount": null
@@ -2172,7 +2172,7 @@
     "start_time": "2025-06-27T14:05:00+02:00",
     "prices": 0.04618,
     "battery_flow": 0.0,
-    "battery_expected_soc": 15590.316318966667,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": 150.31751816666656,
     "activity": "idle",
     "amount": null
@@ -2181,7 +2181,7 @@
     "start_time": "2025-06-27T14:10:00+02:00",
     "prices": 0.04618,
     "battery_flow": 0.0,
-    "battery_expected_soc": 15590.316318966667,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": 147.0306566666668,
     "activity": "idle",
     "amount": null
@@ -2190,7 +2190,7 @@
     "start_time": "2025-06-27T14:15:00+02:00",
     "prices": 0.04618,
     "battery_flow": 0.0,
-    "battery_expected_soc": 15590.316318966667,
+    "battery_expected_soc": 16171.241763299999,
     "house_consumption": 112.36492349999999,
     "activity": "idle",
     "amount": null
@@ -2199,7 +2199,7 @@
     "start_time": "2025-06-27T14:20:00+02:00",
     "prices": 0.04618,
     "battery_flow": 41.5579090833334,
-    "battery_expected_soc": 15629.796332595834,
+    "battery_expected_soc": 16210.721776929166,
     "house_consumption": -41.55790908333339,
     "activity": "charge",
     "amount": 41.5579090833334
@@ -2208,7 +2208,7 @@
     "start_time": "2025-06-27T14:25:00+02:00",
     "prices": 0.04618,
     "battery_flow": 266.7409565833334,
-    "battery_expected_soc": 15883.20024135,
+    "battery_expected_soc": 16464.12568568333,
     "house_consumption": -266.74095658333334,
     "activity": "charge",
     "amount": 266.7409565833334
@@ -2217,7 +2217,7 @@
     "start_time": "2025-06-27T14:30:00+02:00",
     "prices": 0.04618,
     "battery_flow": 416.66666666666663,
-    "battery_expected_soc": 16279.033574683332,
+    "battery_expected_soc": 16859.959019016664,
     "house_consumption": -471.02601449999935,
     "activity": "charge",
     "amount": 416.66666666666663
@@ -2226,7 +2226,7 @@
     "start_time": "2025-06-27T14:35:00+02:00",
     "prices": 0.04618,
     "battery_flow": 16.472873666666857,
-    "battery_expected_soc": 16294.682804666665,
+    "battery_expected_soc": 16875.608249,
     "house_consumption": -16.472873666666864,
     "activity": "charge",
     "amount": 16.472873666666857
@@ -2235,7 +2235,7 @@
     "start_time": "2025-06-27T14:40:00+02:00",
     "prices": 0.04618,
     "battery_flow": 260.8238197499999,
-    "battery_expected_soc": 16542.465433429166,
+    "battery_expected_soc": 17123.3908777625,
     "house_consumption": -260.82381974999987,
     "activity": "charge",
     "amount": 260.8238197499999
@@ -2244,7 +2244,7 @@
     "start_time": "2025-06-27T14:45:00+02:00",
     "prices": 0.04618,
     "battery_flow": 332.74120224999984,
-    "battery_expected_soc": 16858.569575566664,
+    "battery_expected_soc": 17439.495019899998,
     "house_consumption": -332.7412022499998,
     "activity": "charge",
     "amount": 332.74120224999984
@@ -2253,7 +2253,7 @@
     "start_time": "2025-06-27T14:50:00+02:00",
     "prices": 0.04618,
     "battery_flow": 160.1214670833332,
-    "battery_expected_soc": 17010.68496929583,
+    "battery_expected_soc": 17591.610413629165,
     "house_consumption": -160.12146708333316,
     "activity": "charge",
     "amount": 160.1214670833332
@@ -2262,7 +2262,7 @@
     "start_time": "2025-06-27T14:55:00+02:00",
     "prices": 0.04618,
     "battery_flow": 116.47802625000018,
-    "battery_expected_soc": 17121.33909423333,
+    "battery_expected_soc": 17702.264538566666,
     "house_consumption": -116.47802625000017,
     "activity": "charge",
     "amount": 116.47802625000018
@@ -2271,7 +2271,7 @@
     "start_time": "2025-06-27T15:00:00+02:00",
     "prices": 0.0454,
     "battery_flow": 55.313082583333184,
-    "battery_expected_soc": 17173.8865226875,
+    "battery_expected_soc": 17754.811967020833,
     "house_consumption": -55.313082583333184,
     "activity": "charge",
     "amount": 55.313082583333184
@@ -2280,7 +2280,7 @@
     "start_time": "2025-06-27T15:05:00+02:00",
     "prices": 0.0454,
     "battery_flow": 0.0,
-    "battery_expected_soc": 17173.8865226875,
+    "battery_expected_soc": 17754.811967020833,
     "house_consumption": 46.16391775000005,
     "activity": "idle",
     "amount": null
@@ -2289,7 +2289,7 @@
     "start_time": "2025-06-27T15:10:00+02:00",
     "prices": 0.0454,
     "battery_flow": 97.51924300000005,
-    "battery_expected_soc": 17266.529803537498,
+    "battery_expected_soc": 17847.455247870832,
     "house_consumption": -97.51924300000003,
     "activity": "charge",
     "amount": 97.51924300000005
@@ -2298,7 +2298,7 @@
     "start_time": "2025-06-27T15:15:00+02:00",
     "prices": 0.0454,
     "battery_flow": 84.58667208333343,
-    "battery_expected_soc": 17346.887142016665,
+    "battery_expected_soc": 17927.81258635,
     "house_consumption": -84.5866720833334,
     "activity": "charge",
     "amount": 84.58667208333343
@@ -2307,7 +2307,7 @@
     "start_time": "2025-06-27T15:20:00+02:00",
     "prices": 0.0454,
     "battery_flow": 150.28161708333363,
-    "battery_expected_soc": 17489.65467824583,
+    "battery_expected_soc": 18070.580122579166,
     "house_consumption": -150.28161708333363,
     "activity": "charge",
     "amount": 150.28161708333363
@@ -2316,7 +2316,7 @@
     "start_time": "2025-06-27T15:25:00+02:00",
     "prices": 0.0454,
     "battery_flow": 171.1299212500004,
-    "battery_expected_soc": 17652.228103433332,
+    "battery_expected_soc": 18233.153547766666,
     "house_consumption": -171.12992125000034,
     "activity": "charge",
     "amount": 171.1299212500004
@@ -2325,7 +2325,7 @@
     "start_time": "2025-06-27T15:30:00+02:00",
     "prices": 0.0454,
     "battery_flow": 189.23120058333322,
-    "battery_expected_soc": 17831.9977439875,
+    "battery_expected_soc": 18412.923188320834,
     "house_consumption": -189.2312005833332,
     "activity": "charge",
     "amount": 189.23120058333322
@@ -2334,7 +2334,7 @@
     "start_time": "2025-06-27T15:35:00+02:00",
     "prices": 0.0454,
     "battery_flow": 199.50419908333288,
-    "battery_expected_soc": 18021.526733116665,
+    "battery_expected_soc": 18602.45217745,
     "house_consumption": -199.5041990833329,
     "activity": "charge",
     "amount": 199.50419908333288
@@ -2343,7 +2343,7 @@
     "start_time": "2025-06-27T15:40:00+02:00",
     "prices": 0.0454,
     "battery_flow": 129.5610748333332,
-    "battery_expected_soc": 18144.609754208333,
+    "battery_expected_soc": 18725.535198541667,
     "house_consumption": -129.5610748333332,
     "activity": "charge",
     "amount": 129.5610748333332
@@ -2352,7 +2352,7 @@
     "start_time": "2025-06-27T15:45:00+02:00",
     "prices": 0.0454,
     "battery_flow": 61.92915449999991,
-    "battery_expected_soc": 18203.442450983333,
+    "battery_expected_soc": 18784.367895316667,
     "house_consumption": -61.9291544999999,
     "activity": "charge",
     "amount": 61.92915449999991
@@ -2361,7 +2361,7 @@
     "start_time": "2025-06-27T15:50:00+02:00",
     "prices": 0.0454,
     "battery_flow": 20.82413258333337,
-    "battery_expected_soc": 18223.2253769375,
+    "battery_expected_soc": 18804.150821270832,
     "house_consumption": -20.82413258333337,
     "activity": "charge",
     "amount": 20.82413258333337
@@ -2370,7 +2370,7 @@
     "start_time": "2025-06-27T15:55:00+02:00",
     "prices": 0.0454,
     "battery_flow": 27.803648916666653,
-    "battery_expected_soc": 18249.638843408335,
+    "battery_expected_soc": 18830.56428774167,
     "house_consumption": -27.803648916666653,
     "activity": "charge",
     "amount": 27.803648916666653
@@ -2379,7 +2379,7 @@
     "start_time": "2025-06-27T16:00:00+02:00",
     "prices": 0.04385,
     "battery_flow": 28.322308833333324,
-    "battery_expected_soc": 18276.5450368,
+    "battery_expected_soc": 18857.470481133336,
     "house_consumption": -28.322308833333324,
     "activity": "charge",
     "amount": 28.322308833333324
@@ -2388,7 +2388,7 @@
     "start_time": "2025-06-27T16:05:00+02:00",
     "prices": 0.04385,
     "battery_flow": 5.602478249999991,
-    "battery_expected_soc": 18281.8673911375,
+    "battery_expected_soc": 18862.792835470835,
     "house_consumption": -5.602478250000009,
     "activity": "charge",
     "amount": 5.602478249999991
@@ -2397,7 +2397,7 @@
     "start_time": "2025-06-27T16:10:00+02:00",
     "prices": 0.04385,
     "battery_flow": 209.36760033333346,
-    "battery_expected_soc": 18480.766611454164,
+    "battery_expected_soc": 19061.6920557875,
     "house_consumption": -209.36760033333348,
     "activity": "charge",
     "amount": 209.36760033333346
@@ -2406,7 +2406,7 @@
     "start_time": "2025-06-27T16:15:00+02:00",
     "prices": 0.04385,
     "battery_flow": 265.9158557499996,
-    "battery_expected_soc": 18733.386674416666,
+    "battery_expected_soc": 19314.31211875,
     "house_consumption": -265.91585574999954,
     "activity": "charge",
     "amount": 265.9158557499996
@@ -2415,7 +2415,7 @@
     "start_time": "2025-06-27T16:20:00+02:00",
     "prices": 0.04385,
     "battery_flow": 281.17861408333283,
-    "battery_expected_soc": 19000.50635779583,
+    "battery_expected_soc": 19581.431802129166,
     "house_consumption": -281.1786140833328,
     "activity": "charge",
     "amount": 281.17861408333283
@@ -2424,7 +2424,7 @@
     "start_time": "2025-06-27T16:25:00+02:00",
     "prices": 0.04385,
     "battery_flow": 223.7686819166666,
-    "battery_expected_soc": 19213.086605616663,
+    "battery_expected_soc": 19794.012049949997,
     "house_consumption": -223.76868191666665,
     "activity": "charge",
     "amount": 223.7686819166666
@@ -2433,7 +2433,7 @@
     "start_time": "2025-06-27T16:30:00+02:00",
     "prices": 0.04385,
     "battery_flow": 196.60413299999996,
-    "battery_expected_soc": 19399.860531966664,
+    "battery_expected_soc": 19980.785976299998,
     "house_consumption": -196.60413299999996,
     "activity": "charge",
     "amount": 196.60413299999996
@@ -2442,7 +2442,7 @@
     "start_time": "2025-06-27T16:35:00+02:00",
     "prices": 0.04385,
     "battery_flow": 200.41579016666657,
-    "battery_expected_soc": 19590.255532624997,
+    "battery_expected_soc": 20171.180976958334,
     "house_consumption": -200.41579016666654,
     "activity": "charge",
     "amount": 200.41579016666657
@@ -2451,7 +2451,7 @@
     "start_time": "2025-06-27T16:40:00+02:00",
     "prices": 0.04385,
     "battery_flow": 13.566864500000635,
-    "battery_expected_soc": 19603.144053899996,
+    "battery_expected_soc": 20184.069498233333,
     "house_consumption": -13.566864500000634,
     "activity": "charge",
     "amount": 13.566864500000635
@@ -2460,7 +2460,7 @@
     "start_time": "2025-06-27T16:45:00+02:00",
     "prices": 0.04385,
     "battery_flow": 162.64666675000004,
-    "battery_expected_soc": 19757.6583873125,
+    "battery_expected_soc": 20338.583831645832,
     "house_consumption": -162.64666675,
     "activity": "charge",
     "amount": 162.64666675000004
@@ -2469,7 +2469,7 @@
     "start_time": "2025-06-27T16:50:00+02:00",
     "prices": 0.04385,
     "battery_flow": 191.2970919999997,
-    "battery_expected_soc": 19939.390624712498,
+    "battery_expected_soc": 20520.31606904583,
     "house_consumption": -191.2970919999997,
     "activity": "charge",
     "amount": 191.2970919999997
@@ -2478,7 +2478,7 @@
     "start_time": "2025-06-27T16:55:00+02:00",
     "prices": 0.04385,
     "battery_flow": 96.54471450000037,
-    "battery_expected_soc": 20031.1081034875,
+    "battery_expected_soc": 20612.033547820833,
     "house_consumption": -96.54471450000035,
     "activity": "charge",
     "amount": 96.54471450000037
@@ -2486,116 +2486,116 @@
   "2025-06-27T17:00:00+02:00": {
     "start_time": "2025-06-27T17:00:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 102.28512425000007,
-    "battery_expected_soc": 20128.278971524996,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 21007.866881154165,
     "house_consumption": -102.28512425000008,
     "activity": "charge",
-    "amount": 102.28512425000007
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:05:00+02:00": {
     "start_time": "2025-06-27T17:05:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 155.49942358333342,
-    "battery_expected_soc": 20276.003423929164,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 21403.7002144875,
     "house_consumption": -155.49942358333345,
     "activity": "charge",
-    "amount": 155.49942358333342
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:10:00+02:00": {
     "start_time": "2025-06-27T17:10:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 53.24309725,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 21799.533547820836,
     "house_consumption": -53.243097250000005,
     "activity": "charge",
-    "amount": 53.24309725
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:15:00+02:00": {
     "start_time": "2025-06-27T17:15:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 22195.366881154165,
     "house_consumption": 75.17799875000006,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:20:00+02:00": {
     "start_time": "2025-06-27T17:20:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 22591.200214487497,
     "house_consumption": 119.94731050000033,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:25:00+02:00": {
     "start_time": "2025-06-27T17:25:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 22987.03354782083,
     "house_consumption": 59.96341666666669,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:30:00+02:00": {
     "start_time": "2025-06-27T17:30:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 23382.866881154165,
     "house_consumption": 188.5085208333336,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:35:00+02:00": {
     "start_time": "2025-06-27T17:35:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 23778.700214487493,
     "house_consumption": 245.49010575000025,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:40:00+02:00": {
     "start_time": "2025-06-27T17:40:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 24174.53354782083,
     "house_consumption": 25.420525499999997,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:45:00+02:00": {
     "start_time": "2025-06-27T17:45:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 24570.36688115416,
     "house_consumption": 59.49508666666682,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:50:00+02:00": {
     "start_time": "2025-06-27T17:50:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20326.584366316663,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 24966.200214487493,
     "house_consumption": 71.70851466666693,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T17:55:00+02:00": {
     "start_time": "2025-06-27T17:55:00+02:00",
     "prices": 0.04086,
-    "battery_flow": 64.8459245833335,
-    "battery_expected_soc": 20388.18799467083,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 25362.033547820825,
     "house_consumption": -64.8459245833335,
     "activity": "charge",
-    "amount": 64.8459245833335
+    "amount": 416.66666666666663
   },
   "2025-06-27T18:00:00+02:00": {
     "start_time": "2025-06-27T18:00:00+02:00",
     "prices": 0.04319,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20388.18799467083,
+    "battery_expected_soc": 25362.033547820825,
     "house_consumption": 137.73264966666673,
     "activity": "idle",
     "amount": null
@@ -2604,7 +2604,7 @@
     "start_time": "2025-06-27T18:05:00+02:00",
     "prices": 0.04319,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20388.18799467083,
+    "battery_expected_soc": 25362.033547820825,
     "house_consumption": 110.50253133333308,
     "activity": "idle",
     "amount": null
@@ -2613,7 +2613,7 @@
     "start_time": "2025-06-27T18:10:00+02:00",
     "prices": 0.04319,
     "battery_flow": 6.770616333333373,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 25368.465633337495,
     "house_consumption": -6.770616333333369,
     "activity": "charge",
     "amount": 6.770616333333373
@@ -2622,7 +2622,7 @@
     "start_time": "2025-06-27T18:15:00+02:00",
     "prices": 0.04319,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 25368.465633337495,
     "house_consumption": 89.44155916666655,
     "activity": "idle",
     "amount": null
@@ -2631,7 +2631,7 @@
     "start_time": "2025-06-27T18:20:00+02:00",
     "prices": 0.04319,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 25368.465633337495,
     "house_consumption": 18.88244600000009,
     "activity": "idle",
     "amount": null
@@ -2639,71 +2639,71 @@
   "2025-06-27T18:25:00+02:00": {
     "start_time": "2025-06-27T18:25:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 214.95592622370046,
+    "battery_expected_soc": 25572.673763250008,
     "house_consumption": 22.4719421666666,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 214.95592622370046
   },
   "2025-06-27T18:30:00+02:00": {
     "start_time": "2025-06-27T18:30:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 25968.507096583344,
     "house_consumption": 23.373554666666628,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T18:35:00+02:00": {
     "start_time": "2025-06-27T18:35:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 26364.340429916672,
     "house_consumption": 81.00428391666658,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T18:40:00+02:00": {
     "start_time": "2025-06-27T18:40:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 26760.173763250008,
     "house_consumption": 56.02789133333344,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T18:45:00+02:00": {
     "start_time": "2025-06-27T18:45:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 27156.00709658334,
     "house_consumption": 59.46130800000001,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T18:50:00+02:00": {
     "start_time": "2025-06-27T18:50:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 27551.840429916672,
     "house_consumption": 64.72883991666652,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T18:55:00+02:00": {
     "start_time": "2025-06-27T18:55:00+02:00",
     "prices": 0.04319,
-    "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_flow": 416.66666666666663,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 72.29862225000007,
-    "activity": "idle",
-    "amount": null
+    "activity": "charge",
+    "amount": 416.66666666666663
   },
   "2025-06-27T19:00:00+02:00": {
     "start_time": "2025-06-27T19:00:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 80.23539941666643,
     "activity": "idle",
     "amount": null
@@ -2712,7 +2712,7 @@
     "start_time": "2025-06-27T19:05:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 92.66273024999987,
     "activity": "idle",
     "amount": null
@@ -2721,7 +2721,7 @@
     "start_time": "2025-06-27T19:10:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 166.0061664999998,
     "activity": "idle",
     "amount": null
@@ -2730,7 +2730,7 @@
     "start_time": "2025-06-27T19:15:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 95.14180233333333,
     "activity": "idle",
     "amount": null
@@ -2739,7 +2739,7 @@
     "start_time": "2025-06-27T19:20:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 101.94578433333318,
     "activity": "idle",
     "amount": null
@@ -2748,7 +2748,7 @@
     "start_time": "2025-06-27T19:25:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 21.966559583333396,
     "activity": "idle",
     "amount": null
@@ -2757,7 +2757,7 @@
     "start_time": "2025-06-27T19:30:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 20.613000833333338,
     "activity": "idle",
     "amount": null
@@ -2766,7 +2766,7 @@
     "start_time": "2025-06-27T19:35:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 35.58488541666675,
     "activity": "idle",
     "amount": null
@@ -2775,7 +2775,7 @@
     "start_time": "2025-06-27T19:40:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 94.22440333333323,
     "activity": "idle",
     "amount": null
@@ -2784,7 +2784,7 @@
     "start_time": "2025-06-27T19:45:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 28.195471500000004,
     "activity": "idle",
     "amount": null
@@ -2793,7 +2793,7 @@
     "start_time": "2025-06-27T19:50:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 29.57417258333331,
     "activity": "idle",
     "amount": null
@@ -2802,7 +2802,7 @@
     "start_time": "2025-06-27T19:55:00+02:00",
     "prices": 0.05138,
     "battery_flow": 0.0,
-    "battery_expected_soc": 20394.6200801875,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 37.013638,
     "activity": "idle",
     "amount": null
@@ -2810,80 +2810,80 @@
   "2025-06-27T20:00:00+02:00": {
     "start_time": "2025-06-27T20:00:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -24.19598816666668,
-    "battery_expected_soc": 20370.42409202083,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 24.19598816666668,
-    "activity": "self_consumption",
-    "amount": -24.19598816666668
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:05:00+02:00": {
     "start_time": "2025-06-27T20:05:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -95.98486333333334,
-    "battery_expected_soc": 20274.439228687497,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 95.98486333333332,
-    "activity": "self_consumption",
-    "amount": -95.98486333333334
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:10:00+02:00": {
     "start_time": "2025-06-27T20:10:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -29.148327416666607,
-    "battery_expected_soc": 20245.29090127083,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 29.148327416666607,
-    "activity": "self_consumption",
-    "amount": -29.148327416666607
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:15:00+02:00": {
     "start_time": "2025-06-27T20:15:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -26.11363808333333,
-    "battery_expected_soc": 20219.177263187496,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 26.11363808333333,
-    "activity": "self_consumption",
-    "amount": -26.11363808333333
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:20:00+02:00": {
     "start_time": "2025-06-27T20:20:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -81.83199741666657,
-    "battery_expected_soc": 20137.34526577083,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 81.83199741666657,
-    "activity": "self_consumption",
-    "amount": -81.83199741666657
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:25:00+02:00": {
     "start_time": "2025-06-27T20:25:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 19720.67859910416,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 652.5730876666659,
-    "activity": "self_consumption",
-    "amount": -416.66666666666663
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:30:00+02:00": {
     "start_time": "2025-06-27T20:30:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 19304.011932437497,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 656.5160913333342,
-    "activity": "self_consumption",
-    "amount": -416.66666666666663
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:35:00+02:00": {
     "start_time": "2025-06-27T20:35:00+02:00",
     "prices": 0.0609,
-    "battery_flow": -131.66689885416582,
-    "battery_expected_soc": 19172.345033583333,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 752.4085710833325,
-    "activity": "self_consumption",
-    "amount": -131.66689885416582
+    "activity": "idle",
+    "amount": null
   },
   "2025-06-27T20:40:00+02:00": {
     "start_time": "2025-06-27T20:40:00+02:00",
     "prices": 0.0609,
     "battery_flow": 0.0,
-    "battery_expected_soc": 19172.345033583333,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 752.9180236666658,
     "activity": "idle",
     "amount": null
@@ -2892,7 +2892,7 @@
     "start_time": "2025-06-27T20:45:00+02:00",
     "prices": 0.0609,
     "battery_flow": 0.0,
-    "battery_expected_soc": 19172.345033583333,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 752.9003676666658,
     "activity": "idle",
     "amount": null
@@ -2901,7 +2901,7 @@
     "start_time": "2025-06-27T20:50:00+02:00",
     "prices": 0.0609,
     "battery_flow": 0.0,
-    "battery_expected_soc": 19172.345033583333,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 752.9247372499991,
     "activity": "idle",
     "amount": null
@@ -2910,7 +2910,7 @@
     "start_time": "2025-06-27T20:55:00+02:00",
     "prices": 0.0609,
     "battery_flow": 0.0,
-    "battery_expected_soc": 19172.345033583333,
+    "battery_expected_soc": 27947.673763250004,
     "house_consumption": 752.8928200833325,
     "activity": "idle",
     "amount": null
@@ -2919,7 +2919,7 @@
     "start_time": "2025-06-27T21:00:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 18755.678366916665,
+    "battery_expected_soc": 27531.007096583337,
     "house_consumption": 752.9406122499992,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2928,7 +2928,7 @@
     "start_time": "2025-06-27T21:05:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 18339.01170025,
+    "battery_expected_soc": 27114.340429916672,
     "house_consumption": 752.8914277499991,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2937,7 +2937,7 @@
     "start_time": "2025-06-27T21:10:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 17922.345033583333,
+    "battery_expected_soc": 26697.67376325,
     "house_consumption": 752.8872900833326,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2946,7 +2946,7 @@
     "start_time": "2025-06-27T21:15:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 17505.67836691667,
+    "battery_expected_soc": 26281.007096583337,
     "house_consumption": 752.9811474999992,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2955,7 +2955,7 @@
     "start_time": "2025-06-27T21:20:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 17089.01170025,
+    "battery_expected_soc": 25864.34042991667,
     "house_consumption": 752.8210523333324,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2964,7 +2964,7 @@
     "start_time": "2025-06-27T21:25:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 16672.345033583333,
+    "battery_expected_soc": 25447.67376325,
     "house_consumption": 752.8422634166659,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2973,7 +2973,7 @@
     "start_time": "2025-06-27T21:30:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 16255.678366916667,
+    "battery_expected_soc": 25031.007096583333,
     "house_consumption": 752.9618127499991,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2982,7 +2982,7 @@
     "start_time": "2025-06-27T21:35:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 15839.011700250001,
+    "battery_expected_soc": 24614.340429916665,
     "house_consumption": 745.2909804999991,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -2991,7 +2991,7 @@
     "start_time": "2025-06-27T21:40:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 15422.345033583333,
+    "battery_expected_soc": 24197.67376325,
     "house_consumption": 747.0584638333326,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -3000,7 +3000,7 @@
     "start_time": "2025-06-27T21:45:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 15005.678366916667,
+    "battery_expected_soc": 23781.007096583333,
     "house_consumption": 745.2198406666658,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -3009,7 +3009,7 @@
     "start_time": "2025-06-27T21:50:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 14589.01170025,
+    "battery_expected_soc": 23364.340429916665,
     "house_consumption": 746.8777364166658,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -3018,7 +3018,7 @@
     "start_time": "2025-06-27T21:55:00+02:00",
     "prices": 0.11073,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 14172.345033583333,
+    "battery_expected_soc": 22947.673763249997,
     "house_consumption": 746.808096249999,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -3027,7 +3027,7 @@
     "start_time": "2025-06-27T22:00:00+02:00",
     "prices": 0.15425,
     "battery_flow": -416.66666666666663,
-    "battery_expected_soc": 13755.678366916667,
+    "battery_expected_soc": 22531.00709658333,
     "house_consumption": 738.9989564999993,
     "activity": "self_consumption",
     "amount": -416.66666666666663
@@ -3036,7 +3036,7 @@
     "start_time": "2025-06-27T22:05:00+02:00",
     "prices": 0.15425,
     "battery_flow": -62.345573833333255,
-    "battery_expected_soc": 13693.332793083333,
+    "battery_expected_soc": 22468.66152275,
     "house_consumption": 62.34557383333326,
     "activity": "self_consumption",
     "amount": -62.345573833333255
@@ -3045,7 +3045,7 @@
     "start_time": "2025-06-27T22:10:00+02:00",
     "prices": 0.15425,
     "battery_flow": -31.306978916666665,
-    "battery_expected_soc": 13662.025814166667,
+    "battery_expected_soc": 22437.35454383333,
     "house_consumption": 31.30697891666667,
     "activity": "self_consumption",
     "amount": -31.306978916666665
@@ -3054,7 +3054,7 @@
     "start_time": "2025-06-27T22:15:00+02:00",
     "prices": 0.15425,
     "battery_flow": -29.78188383333337,
-    "battery_expected_soc": 13632.243930333334,
+    "battery_expected_soc": 22407.572659999998,
     "house_consumption": 29.781883833333374,
     "activity": "self_consumption",
     "amount": -29.78188383333337
@@ -3063,7 +3063,7 @@
     "start_time": "2025-06-27T22:20:00+02:00",
     "prices": 0.15425,
     "battery_flow": -25.36848275000002,
-    "battery_expected_soc": 13606.875447583334,
+    "battery_expected_soc": 22382.204177249998,
     "house_consumption": 25.368482750000016,
     "activity": "self_consumption",
     "amount": -25.36848275000002
@@ -3072,7 +3072,7 @@
     "start_time": "2025-06-27T22:25:00+02:00",
     "prices": 0.15425,
     "battery_flow": -128.02860900000007,
-    "battery_expected_soc": 13478.846838583333,
+    "battery_expected_soc": 22254.17556825,
     "house_consumption": 128.02860900000007,
     "activity": "self_consumption",
     "amount": -128.02860900000007
@@ -3081,7 +3081,7 @@
     "start_time": "2025-06-27T22:30:00+02:00",
     "prices": 0.15425,
     "battery_flow": -49.51713608333328,
-    "battery_expected_soc": 13429.3297025,
+    "battery_expected_soc": 22204.658432166667,
     "house_consumption": 49.517136083333284,
     "activity": "self_consumption",
     "amount": -49.51713608333328
@@ -3090,7 +3090,7 @@
     "start_time": "2025-06-27T22:35:00+02:00",
     "prices": 0.15425,
     "battery_flow": -29.474975833333307,
-    "battery_expected_soc": 13399.854726666666,
+    "battery_expected_soc": 22175.183456333332,
     "house_consumption": 29.474975833333307,
     "activity": "self_consumption",
     "amount": -29.474975833333307
@@ -3099,7 +3099,7 @@
     "start_time": "2025-06-27T22:40:00+02:00",
     "prices": 0.15425,
     "battery_flow": -28.88898133333328,
-    "battery_expected_soc": 13370.965745333333,
+    "battery_expected_soc": 22146.294475,
     "house_consumption": 28.888981333333284,
     "activity": "self_consumption",
     "amount": -28.88898133333328
@@ -3108,7 +3108,7 @@
     "start_time": "2025-06-27T22:45:00+02:00",
     "prices": 0.15425,
     "battery_flow": -24.737816750000057,
-    "battery_expected_soc": 13346.227928583334,
+    "battery_expected_soc": 22121.55665825,
     "house_consumption": 24.737816750000057,
     "activity": "self_consumption",
     "amount": -24.737816750000057
@@ -3117,7 +3117,7 @@
     "start_time": "2025-06-27T22:50:00+02:00",
     "prices": 0.15425,
     "battery_flow": -33.11631241666668,
-    "battery_expected_soc": 13313.111616166667,
+    "battery_expected_soc": 22088.440345833333,
     "house_consumption": 33.11631241666667,
     "activity": "self_consumption",
     "amount": -33.11631241666668
@@ -3126,7 +3126,7 @@
     "start_time": "2025-06-27T22:55:00+02:00",
     "prices": 0.15425,
     "battery_flow": -88.4403458333334,
-    "battery_expected_soc": 13224.671270333334,
+    "battery_expected_soc": 22000.0,
     "house_consumption": 88.44034583333338,
     "activity": "self_consumption",
     "amount": -88.4403458333334
@@ -3134,10 +3134,10 @@
   "2025-06-27T23:00:00+02:00": {
     "start_time": "2025-06-27T23:00:00+02:00",
     "prices": 0.08305,
-    "battery_flow": -24.671270333333357,
-    "battery_expected_soc": 13200.0,
+    "battery_flow": 0.0,
+    "battery_expected_soc": 22000.0,
     "house_consumption": 24.67127033333336,
-    "activity": "self_consumption",
-    "amount": -24.671270333333357
+    "activity": "idle",
+    "amount": null
   }
 }

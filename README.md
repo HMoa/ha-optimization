@@ -17,7 +17,7 @@ This takes some inspiration from:
   -- <https://openweathermap.org/api/solar-panels-and-energy-prediction>
   -- Compare with cloud coverage
 
-- [ ] Create better mocks for production / consumption
+- [x] Create better mocks for production / consumption
 - [ ] Create code to set the battery mode
 - [ ] Test with a running home assistant - docker
 - [ ] Test run on a Rpi

@@ -20,6 +20,7 @@ class TimeslotItem:
     battery_expected_soc: float
     house_consumption: float
     activity: Activity
+    grid_flow: float  # Positive for import, negative for export
     amount: Optional[float] = None
 
 
