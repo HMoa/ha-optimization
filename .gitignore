@@ -174,3 +174,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Machine learning model files
+*.joblib
+*.pkl
+
+# Sample data
+sample_data/

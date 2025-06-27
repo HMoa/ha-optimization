@@ -1,16 +1,14 @@
 from datetime import datetime, timedelta
 
 import requests
-
 from models import Elpris
 
 
-def fetch_electricity_prices():
+def fetch_electricity_prices(start_date: datetime):
     base_url = "https://www.elprisetjustnu.se/api/v1/prices"
     grid_area = "SE3"
 
-    # Get today's date
-    today = datetime.now()
+    today = start_date
     tomorrow = today + timedelta(days=1)
 
     prices = {}
@@ -47,6 +45,6 @@ def fetch_electricity_prices():
 
 
 if __name__ == "__main__":
-    prices = fetch_electricity_prices()
+    prices = fetch_electricity_prices(datetime.now())
     for time, price in sorted(prices.items()):
         print(f"{time}: {price} SEK/kWh")

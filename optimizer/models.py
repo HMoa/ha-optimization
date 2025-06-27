@@ -18,6 +18,7 @@ class TimeslotItem:
     prices: float
     battery_flow: float
     battery_expected_soc: float
+    house_consumption: float
     activity: Activity
     amount: Optional[float] = None
 

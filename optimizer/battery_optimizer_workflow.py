@@ -11,10 +11,13 @@ from solver import Solver
 
 
 class BatteryOptimizerWorkflow:
-    def __init__(self, battery_percent: int = 5):
+    def __init__(self, battery_percent: int):
         self.config = BatteryConfig.default_config()
         self.config.initial_energy = battery_percent * self.config.storage_size_wh / 100
-        self.solver = Solver()
+        print(
+            f"Initial energy: {self.config.initial_energy} and percent: {battery_percent}"
+        )
+        self.solver = Solver(timeslot_length=5)
         self.schedule = None
 
     def run_workflow(self):
@@ -37,17 +40,13 @@ class BatteryOptimizerWorkflow:
         set_battery_in_state(current_schedule_item)
 
     def generate_schedule(self):
-        prices = fetch_electricity_prices()
 
         start_date = self.get_current_timeslot()
+        prices = fetch_electricity_prices(start_date)
         end_date = max(prices.keys())
 
         consumption = get_consumption(start_date, end_date)
         production = get_production(start_date, end_date)
-
-        self.schedule = self.solver.create_schedule(
-            production, consumption, prices, self.config
-        )
 
         params = [production, consumption, prices, self.config]
 
@@ -73,6 +72,8 @@ class BatteryOptimizerWorkflow:
 
         with open(sample_data_path, "rb") as f:
             loaded_params = pickle.load(f)
+
+        loaded_params[3].initial_energy = self.config.initial_energy
 
         schedule = self.solver.create_schedule(*loaded_params)
         if schedule is None:

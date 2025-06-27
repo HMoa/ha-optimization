@@ -33,7 +33,7 @@ class BatteryConfig:
         return BatteryConfig(
             grid_area="SE3",
             storage_size_wh=44000,
-            initial_energy=5000,
-            max_charge_speed_w=5000,
-            max_discharge_speed_w=5000,
+            initial_energy=1000,
+            max_charge_speed_w=8000,
+            max_discharge_speed_w=9000,
         )

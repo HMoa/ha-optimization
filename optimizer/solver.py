@@ -1,24 +1,28 @@
 from datetime import datetime
 from typing import Dict, Optional
 
-from ortools.linear_solver import pywraplp
-
 from battery_config import BatteryConfig
 from models import Activity, Elpris, TimeslotItem
+from ortools.linear_solver import pywraplp
 
 
 class Solver:
-    def __init__(self):
+    def __init__(self, timeslot_length: int):
         self.solver = None
+        self.timeslot_length = timeslot_length
+
+    def toWh(self, value: float) -> float:
+        return value * (self.timeslot_length / 60)
 
     def create_schedule(
         self,
-        production: Dict[datetime, float],
-        consumption: Dict[datetime, float],
+        production_w: Dict[datetime, float],
+        consumption_w: Dict[datetime, float],
         prices: Dict[datetime, Elpris],
         battery_config: BatteryConfig,
     ) -> Optional[Dict[datetime, TimeslotItem]]:
         eta_c = 0.95
+        battery_min = battery_config.storage_size_wh * 0.3
 
         # Create the linear solver with the GLOP backend.
         self.solver = pywraplp.Solver.CreateSolver("GLOP")
@@ -26,78 +30,82 @@ class Solver:
             return None
 
         # Create variables for each time-slot
-        time_slots = len(production)
-        if time_slots == 0 or len(consumption) != time_slots:
+        time_slots = len(production_w)
+        if time_slots == 0 or len(consumption_w) != time_slots:
             return None
 
-        grid_import = {
+        grid_import_wh = {
             i: self.solver.NumVar(0, self.solver.infinity(), f"grid_import_{i}")
-            for i in production.keys()
+            for i in production_w.keys()
         }
-        grid_export = {
+        grid_export_wh = {
             i: self.solver.NumVar(0, self.solver.infinity(), f"grid_export_{i}")
-            for i in production.keys()
+            for i in production_w.keys()
         }
-        battery_charge = {
+        battery_charge_wh = {
             i: self.solver.NumVar(
                 0, battery_config.max_charge_speed_w, f"battery_charge_{i}"
             )
-            for i in production.keys()
+            for i in production_w.keys()
         }
-        battery_discharge = {
+        battery_discharge_wh = {
             i: self.solver.NumVar(
                 0, battery_config.max_discharge_speed_w, f"battery_discharge_{i}"
             )
-            for i in production.keys()
+            for i in production_w.keys()
         }
-        battery_energy = {
+        battery_energy_wh = {
             i: self.solver.NumVar(
-                0, battery_config.storage_size_wh, f"battery_energy_{i}"
+                battery_min, battery_config.storage_size_wh, f"battery_energy_{i}"
             )
-            for i in production.keys()
+            for i in production_w.keys()
         }
         is_charging_or_discharging = {
             i: self.solver.BoolVar(f"is_charging_or_discharging_{i}")
-            for i in production.keys()
+            for i in production_w.keys()
         }
 
         # Initial energy in the battery
         initial_energy = battery_config.initial_energy
+        print(f"Initial energy solver: {initial_energy}")
 
         # Constraints
         previous_key = None
-        for i in production.keys():
+        for i in production_w.keys():
 
             # Energy balance constraint
             self.solver.Add(
-                (production[i] * 12) + grid_import[i] + battery_discharge[i]
-                == (consumption[i] * 12) + battery_charge[i] + grid_export[i]
+                self.toWh(production_w[i]) + grid_import_wh[i] + battery_discharge_wh[i]
+                == self.toWh(consumption_w[i])
+                + battery_charge_wh[i]
+                + grid_export_wh[i]
             )
 
             # Battery state update constraint. Make sure the charge and discharge drains the battery for the next timeslot.
             if previous_key is None:
                 self.solver.Add(
-                    battery_energy[i]
+                    battery_energy_wh[i]
                     == initial_energy
-                    + (eta_c * battery_charge[i] / 12)
-                    - (battery_discharge[i] / 12)
+                    + (eta_c * battery_charge_wh[i])
+                    - (battery_discharge_wh[i])
                 )
             else:
                 self.solver.Add(
-                    battery_energy[i]
-                    == battery_energy[previous_key]
-                    + (eta_c * battery_charge[i] / 12)
-                    - (battery_discharge[i] / 12)
+                    battery_energy_wh[i]
+                    == battery_energy_wh[previous_key]
+                    + (eta_c * battery_charge_wh[i])
+                    - (battery_discharge_wh[i])
                 )
 
             # Ensure that charging and discharging cannot happen simultaneously
             self.solver.Add(
-                battery_charge[i]
-                <= battery_config.max_charge_speed_w * is_charging_or_discharging[i]
+                battery_charge_wh[i]
+                <= self.toWh(battery_config.max_charge_speed_w)
+                * is_charging_or_discharging[i]
             )
             self.solver.Add(
-                battery_discharge[i]
-                <= battery_config.max_discharge_speed_w
+                battery_discharge_wh[i]
+                <= self.toWh(battery_config.max_discharge_speed_w)
                 * (1 - is_charging_or_discharging[i])
             )
 
@@ -105,14 +113,15 @@ class Solver:
 
         # Objective: minimize the cost of grid import
         objective = self.solver.Objective()
-        for i in production.keys():
+        for i in production_w.keys():
             objective.SetCoefficient(
-                grid_import[i], prices[get_closest_price_timeslot(i)].get_buy_price()
+                grid_import_wh[i], prices[get_closest_price_timeslot(i)].get_buy_price()
             )
             objective.SetCoefficient(
-                grid_export[i], -prices[get_closest_price_timeslot(i)].get_sell_price()
+                grid_export_wh[i],
+                -prices[get_closest_price_timeslot(i)].get_sell_price(),
             )
-            objective.SetCoefficient(battery_charge[i], 0.01)  # Penalty for charging
+            objective.SetCoefficient(battery_charge_wh[i], 0.01)  # Penalty for charging
         objective.SetMinimization()
 
         result = self.solver.Solve()
@@ -120,20 +129,21 @@ class Solver:
             return None
 
         schedule = {}
-        for i in production.keys():
-            need = (consumption[i] - production[i]) * 12
+        for i in production_w.keys():
+            need = self.toWh(consumption_w[i] - production_w[i])
             flow = (
-                battery_charge[i].solution_value()
-                - battery_discharge[i].solution_value()
+                battery_charge_wh[i].solution_value()
+                - battery_discharge_wh[i].solution_value()
             )
 
             if flow > 1:
-                if flow <= need:
+                if flow <= need + 1:
                     schedule[i] = TimeslotItem(
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
                         battery_flow=flow,
-                        battery_expected_soc=battery_energy[i].solution_value(),
+                        battery_expected_soc=battery_energy_wh[i].solution_value(),
+                        house_consumption=need,
                         activity=Activity.SELF_CONSUMPTION,
                     )
                 else:
@@ -141,19 +151,21 @@ class Solver:
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
                         battery_flow=flow,
-                        battery_expected_soc=battery_energy[i].solution_value(),
+                        battery_expected_soc=battery_energy_wh[i].solution_value(),
+                        house_consumption=need,
                         activity=Activity.CHARGE,
                         amount=flow,
                     )
 
             elif flow < -1:
-                if -flow <= need:
+                if -flow <= need + 1:
                     schedule[i] = TimeslotItem(
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
                         battery_flow=flow,
-                        battery_expected_soc=battery_energy[i].solution_value(),
-                        activity=Activity.DISCHARGE,
+                        battery_expected_soc=battery_energy_wh[i].solution_value(),
+                        house_consumption=need,
+                        activity=Activity.SELF_CONSUMPTION,
                         amount=flow,
                     )
 
@@ -162,8 +174,9 @@ class Solver:
                         start_time=i,
                         prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
                         battery_flow=flow,
-                        battery_expected_soc=battery_energy[i].solution_value(),
-                        activity=Activity.SELF_CONSUMPTION,
+                        battery_expected_soc=battery_energy_wh[i].solution_value(),
+                        house_consumption=need,
+                        activity=Activity.DISCHARGE,
                     )
 
             else:
@@ -171,7 +184,8 @@ class Solver:
                     start_time=i,
                     prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
                     battery_flow=flow,
-                    battery_expected_soc=battery_energy[i].solution_value(),
+                    battery_expected_soc=battery_energy_wh[i].solution_value(),
+                    house_consumption=need,
                     activity=Activity.IDLE,
                 )
 
