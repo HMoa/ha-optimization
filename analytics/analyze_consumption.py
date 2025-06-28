@@ -26,7 +26,25 @@ def add_time_features(df):
         int
     )
 
+    # Lagged features
+    df["consumption_24h_ago"] = df["value"].shift(288)  # 24h * 12 (5-min intervals)
+    df["consumption_7d_ago"] = df["value"].shift(2016)  # 7d * 24h * 12
+    df["consumption_5m_ago"] = df["value"].shift(1)  # 5 minutes ago
+    df["consumption_1h_ago"] = df["value"].shift(12)  # 1 hour ago
+    df["consumption_2h_ago"] = df["value"].shift(24)  # 2 hours ago
+
+    # Rolling averages
+    df["consumption_24h_avg"] = df["value"].rolling(288).mean()
+    df["consumption_7d_avg"] = df["value"].rolling(2016).mean()
+
     return df
+
+
+def resample_to_5min(df):
+    """Resample 1-minute data to 5-minute intervals"""
+    # Only resample the 'value' column, keep time as index
+    df_resampled = df.set_index("time")["value"].resample("5min").mean().reset_index()
+    return df_resampled
 
 
 def main():
@@ -35,11 +53,22 @@ def main():
     # Load the production data
     production_data = pd.read_csv("consumed-power.csv", parse_dates=["time"], sep=",")
 
+    # Resample to 5-minute intervals
+    # production_data = resample_to_5min(production_data)
+
+    # Now add features (lagged features will be correct)
+    production_data = add_time_features(production_data)
+
     # Remove rows where null
     production_data = production_data.dropna(subset=["time"])
     production_data = production_data.dropna(subset=["value"])
 
-    production_data = add_time_features(production_data)
+    best_yet = [
+        "day_of_year",
+        "minutes_of_day",
+        "minutes_sin",
+        "minutes_cos",
+    ]
 
     # Define features and target
     X = production_data[
@@ -51,6 +80,13 @@ def main():
             "minutes_sin",
             "minutes_cos",
             # "night_time",
+            # "consumption_24h_ago",
+            # "consumption_7d_ago",
+            # "consumption_5m_ago",
+            # "consumption_1h_ago",
+            # "consumption_2h_ago",
+            # "consumption_24h_avg",
+            # "consumption_7d_avg",
         ]
     ]
     # y = production_data["production"]
