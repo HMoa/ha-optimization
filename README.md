@@ -24,3 +24,12 @@ This takes some inspiration from:
 - [ ] Node-red: Fetch current schedule item mode
 - [ ] Test with a running home assistant - docker on machine?
 - [ ] Test run on a Rpi (check speed of solver)
+
+## Prediction notes
+
+Features:
+
+- [ ] Temperature, Windspeed, humidity (square temp feature?)
+- [x] Night time - nope
+- [x] Cyclic time
+- [ ] Previous values, 1h, 24h 7d and roling averages + std
