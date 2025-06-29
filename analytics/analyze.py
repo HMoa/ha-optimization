@@ -17,7 +17,6 @@ def main():
 
     # Remove rows where null
     production_data = production_data.dropna(subset=["time"])
-    # production_data = production_data.dropna(subset=["production"])
     production_data = production_data.dropna(subset=["value"])
 
     production_data["minutes_of_day"] = (
@@ -28,7 +27,6 @@ def main():
 
     # Define features and target
     X = production_data[["minutes_of_day", "day_of_week", "week"]]
-    # y = production_data["production"]
     y = production_data["value"]
 
     # Split the data into training and test sets
