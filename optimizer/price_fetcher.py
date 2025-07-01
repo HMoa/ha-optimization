@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime, timedelta
-from typing import Dict
 
 import requests
 
 
-def fetch_electricity_prices() -> Dict[datetime, float]:
+def fetch_electricity_prices() -> dict[datetime, float]:
     base_url = "https://www.elprisetjustnu.se/api/v1/prices"
     grid_area = "SE3"
+    today = datetime.now().date()
 
-    # Get today's date
-    today = datetime.now()
     tomorrow = today + timedelta(days=1)
 
-    prices: Dict[datetime, float] = {}
+    prices: dict[datetime, float] = {}
 
     # Format dates for URL
     today_str = today.strftime("%Y/%m-%d")

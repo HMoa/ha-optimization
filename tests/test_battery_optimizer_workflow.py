@@ -5,9 +5,8 @@ import os
 # Add the parent directory to the path for imports
 import sys
 import unittest
-from datetime import datetime, timedelta
-from typing import Any, List
-from unittest.mock import Mock, patch
+from datetime import datetime
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

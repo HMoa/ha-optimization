@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class Activity(Enum):
@@ -23,7 +22,7 @@ class TimeslotItem:
     house_consumption: float
     activity: Activity
     grid_flow: float  # Positive for import, negative for export
-    amount: Optional[float] = None
+    amount: float | None = None
 
 
 nätnytta = 0.08

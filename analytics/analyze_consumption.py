@@ -64,13 +64,6 @@ def main() -> None:
     production_data = production_data.dropna(subset=["time"])
     production_data = production_data.dropna(subset=["value"])
 
-    best_yet = [
-        "day_of_year",
-        "minutes_of_day",
-        "minutes_sin",
-        "minutes_cos",
-    ]
-
     # Define features and target
     X = production_data[
         [

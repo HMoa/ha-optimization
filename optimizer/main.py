@@ -9,7 +9,6 @@ import json
 import sys
 from datetime import datetime, timedelta
 
-import matplotlib
 import matplotlib.pyplot as plt
 
 from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow

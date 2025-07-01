@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import pickle
 from datetime import datetime, timedelta
-from typing import Any
 
 from optimizer.battery_config import BatteryConfig
 from optimizer.consumption_provider import get_consumption
