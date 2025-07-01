@@ -2,6 +2,8 @@
 """
 Console Application start
 """
+from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -11,10 +13,14 @@ import matplotlib.pyplot as plt
 from battery_optimizer_workflow import BatteryOptimizerWorkflow
 
 
-def plot_outcome(battery_percent):
+def plot_outcome(battery_percent: int) -> int:
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
     # workflow.run_workflow()
     schedule = workflow.generate_schedule_from_file()
+
+    if schedule is None:
+        print("No schedule available to plot")
+        return 1
 
     fig, ax1 = plt.subplots()
 
@@ -71,12 +77,16 @@ def plot_outcome(battery_percent):
     return 0
 
 
-def generate_schedule(battery_percent):
+def generate_schedule(battery_percent: int) -> None:
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
-    schedule = workflow.generate_schedule()
+    workflow.generate_schedule()
+
+    if workflow.schedule is None:
+        print("No schedule generated")
+        return
 
     schedule_json = {}
-    for timestamp, item in schedule.items():
+    for timestamp, item in workflow.schedule.items():
         schedule_json[timestamp.isoformat()] = {
             "start_time": item.start_time.isoformat(),
             "prices": item.prices,
@@ -92,7 +102,7 @@ def generate_schedule(battery_percent):
         json.dump(schedule_json, f, indent=2)
 
 
-def plot_consumption():
+def plot_consumption() -> None:
     from datetime import datetime, timedelta
 
     from consumption_provider import get_consumption
@@ -108,12 +118,12 @@ def plot_consumption():
     plt.show()
 
 
-def plot_production():
+def plot_production() -> None:
     from datetime import datetime, timedelta
 
     from production_provider import get_production
 
-    start_date = datetime(2025, 6, 28, 0, 0, 0)  # 1st of June 2025
+    start_date = datetime(2025, 6, 6, 0, 0, 0)  # 1st of June 2025
     production = get_production(start_date, start_date + timedelta(days=1))
 
     fig, ax1 = plt.subplots()
@@ -124,7 +134,7 @@ def plot_production():
     plt.show()
 
 
-def main():
+def main() -> None:
     """Main function of the application."""
 
     parser = argparse.ArgumentParser(description="Battery Optimizer Workflow")

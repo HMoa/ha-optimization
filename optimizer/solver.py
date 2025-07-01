@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Dict, Optional
 
 from battery_config import BatteryConfig
-from models import Activity, Elpris, TimeslotItem
 from ortools.linear_solver import pywraplp
+
+from models import Activity, Elpris, TimeslotItem
 
 
 class Solver:
@@ -16,11 +18,11 @@ class Solver:
 
     def create_schedule(
         self,
-        production_w: Dict[datetime, float],
-        consumption_w: Dict[datetime, float],
-        prices: Dict[datetime, Elpris],
+        production_w: dict[datetime, float],
+        consumption_w: dict[datetime, float],
+        prices: dict[datetime, Elpris],
         battery_config: BatteryConfig,
-    ) -> Optional[Dict[datetime, TimeslotItem]]:
+    ) -> dict[datetime, TimeslotItem] | None:
         eta_c = 0.95
         battery_min = battery_config.storage_size_wh * 0.3
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
@@ -6,7 +7,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
 
-def main():
+def main() -> None:
     print("This is the main check for analyze.py")
 
     # Load the production data
@@ -23,7 +24,9 @@ def main():
         production_data["time"].dt.hour * 60 + production_data["time"].dt.minute
     )
     production_data["day_of_week"] = production_data["time"].dt.dayofweek
-    production_data["week"] = production_data["time"].dt.isocalendar().week
+    production_data["week"] = production_data["time"].dt.isocalendar()[
+        1
+    ]  # Fix: use [1] to get week number
 
     # Define features and target
     X = production_data[["minutes_of_day", "day_of_week", "week"]]

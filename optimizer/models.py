@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -32,16 +34,16 @@ energi_skatt = 0.55
 
 
 class Elpris:
-    def __init__(self, spot_price):
-        self.buy_price = spot_price + delivery_fee + energi_skatt
-        self.sell_price = spot_price + nätnytta + skatteavdrag
-        self.spot_price = spot_price
+    def __init__(self, spot_price: float) -> None:
+        self.buy_price: float = spot_price + delivery_fee + energi_skatt
+        self.sell_price: float = spot_price + nätnytta + skatteavdrag
+        self.spot_price: float = spot_price
 
-    def get_sell_price(self):
+    def get_sell_price(self) -> float:
         return self.sell_price
 
-    def get_buy_price(self):
+    def get_buy_price(self) -> float:
         return self.buy_price
 
-    def get_spot_price(self):
+    def get_spot_price(self) -> float:
         return self.spot_price

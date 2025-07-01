@@ -1,0 +1,135 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ha-optimizer"
+version = "1.0.0"
+description = "Home energy optimization system for battery and PV management"
+authors = [{name = "Hjalmar", email = "hjalmar@brainspark.se"}]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "absl-py>=2.2.1",
+    "certifi>=2025.1.31",
+    "charset-normalizer>=3.4.1",
+    "idna>=3.10",
+    "immutabledict>=4.2.1",
+    "joblib>=1.4.2",
+    "matplotlib>=3.9.1",
+    "numpy>=2.2.4",
+    "ortools>=9.12.4544",
+    "pandas>=2.2.3",
+    "protobuf>=5.29.4",
+    "python-dateutil>=2.9.0.post0",
+    "pytz>=2025.2",
+    "requests>=2.32.3",
+    "scikit-learn>=1.5.2",
+    "six>=1.17.0",
+    "typing_extensions>=4.13.1",
+    "tzdata>=2025.2",
+    "urllib3>=2.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.15.0",
+    "mypy-extensions>=1.0.0",
+    "types-requests>=2.32.0.20250328",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+ha-optimizer = "optimizer.main:main"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+show_error_context = true
+
+# Ignore missing imports for third-party libraries
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    "sklearn.*",
+    "joblib.*",
+    "ortools.*",
+    "pandas.*",
+    "numpy.*",
+    "requests.*",
+    "urllib3.*",
+    "certifi.*",
+    "charset_normalizer.*",
+    "idna.*",
+    "immutabledict.*",
+    "protobuf.*",
+    "python_dateutil.*",
+    "pytz.*",
+    "six.*",
+    "typing_extensions.*",
+    "tzdata.*",
+    "absl.*",
+    "ortools.linear_solver",
+]
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["optimizer", "analytics", "tests"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]

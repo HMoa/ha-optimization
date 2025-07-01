@@ -1,0 +1,34 @@
+---
+description: Help cursor follow our guildlines for types 
+globs: *.py
+alwaysApply: false
+---
+# Python Strict Typing Rules
+
+## Core Rules
+- Use `from __future__ import annotations` in all files
+- All functions must have parameter and return type annotations
+- All class attributes must have type annotations
+- No `Any` type unless documented why it's necessary
+- Use `Optional[T]` instead of `Union[T, None]`
+- Enable mypy with `--strict --strict-optional --disallow-any-explicit --disallow-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --no-implicit-optional`
+
+## Example
+```python
+from __future__ import annotations
+from typing import List, Optional
+
+class User:
+    def __init__(self, name: str, age: int, email: Optional[str] = None) -> None:
+        self.name: str = name
+        self.age: int = age
+        self.email: Optional[str] = email
+
+    def get_info(self) -> List[str]:
+        return [self.name, str(self.age), self.email or ""]
+```
+
+## Tools
+- mypy (with pedantic settings)
+- pyright (strict mode)
+- ruff (with type checking rules enabled)

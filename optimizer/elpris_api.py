@@ -1,17 +1,21 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta
+from typing import Dict
 
 import requests
+
 from models import Elpris
 
 
-def fetch_electricity_prices(start_date: datetime):
+def fetch_electricity_prices(start_date: datetime) -> Dict[datetime, Elpris]:
     base_url = "https://www.elprisetjustnu.se/api/v1/prices"
     grid_area = "SE3"
 
     today = start_date
     tomorrow = today + timedelta(days=1)
 
-    prices = {}
+    prices: Dict[datetime, Elpris] = {}
 
     # Format dates for URL
     today_str = today.strftime("%Y/%m-%d")

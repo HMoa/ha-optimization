@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import joblib
 import numpy as np
@@ -8,7 +9,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
 
-def add_time_features(df):
+def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     """Add both linear and cyclic time features"""
 
     # Calculate minutes of day for cyclic encoding
@@ -40,14 +41,14 @@ def add_time_features(df):
     return df
 
 
-def resample_to_5min(df):
+def resample_to_5min(df: pd.DataFrame) -> pd.DataFrame:
     """Resample 1-minute data to 5-minute intervals"""
     # Only resample the 'value' column, keep time as index
     df_resampled = df.set_index("time")["value"].resample("5min").mean().reset_index()
     return df_resampled
 
 
-def main():
+def main() -> None:
     print("This is the main check for analyze_consumption.py")
 
     # Load the production data
