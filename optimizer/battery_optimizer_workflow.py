@@ -5,14 +5,12 @@ import pickle
 from datetime import datetime, timedelta
 from typing import Any
 
-from battery_config import BatteryConfig
-from battery_connection import set_battery_in_state
-from consumption_provider import get_consumption
-from elpris_api import fetch_electricity_prices
-from production_provider import get_production
-from solver import Solver
-
-from models import TimeslotItem
+from optimizer.battery_config import BatteryConfig
+from optimizer.consumption_provider import get_consumption
+from optimizer.elpris_api import fetch_electricity_prices
+from optimizer.models import TimeslotItem
+from optimizer.production_provider import get_production
+from optimizer.solver import Solver
 
 
 class BatteryOptimizerWorkflow:
@@ -26,29 +24,6 @@ class BatteryOptimizerWorkflow:
         )
         self.solver = Solver(timeslot_length=5)
         self.schedule: dict[datetime, TimeslotItem] | None = None
-
-    def run_workflow(self) -> None:
-        current_slot_time = self.get_current_timeslot()
-        if self.schedule is None or current_slot_time not in self.schedule.keys():
-            self.generate_schedule()
-        else:
-            print("Schedule already exists")
-
-        if self.schedule is None:
-            print("No schedule available")
-            return
-
-        current_schedule_item = self.schedule[current_slot_time]
-        if (
-            abs(current_schedule_item.battery_expected_soc - self.config.initial_energy)
-            > 2
-        ):
-            self.generate_schedule()
-        else:
-            print("Schedule is valid, executing")
-
-        # execute the schedule item
-        set_battery_in_state(current_schedule_item)
 
     def generate_schedule(self) -> None:
         start_date = self.get_current_timeslot()
@@ -104,22 +79,3 @@ class BatteryOptimizerWorkflow:
         )
 
         return start_date
-
-    def generate_time_slots(
-        self, start: datetime, end: datetime, minutes: int = 5
-    ) -> list[str]:
-        """Generate time slots in 5-minute intervals"""
-        slots = []
-        current = start
-        while current <= end:
-            slots.append(current.isoformat())
-            current += timedelta(minutes=minutes)
-        return slots
-
-    def get_nearest_value(self, history_data: list[Any], target_time: datetime) -> str:
-        """Find the closest recorded value to the requested timestamp"""
-        for state in history_data:
-            for entry in state:
-                if entry["last_changed"] <= target_time:
-                    return str(entry["state"])
-        return "0"  # Default if no data is found

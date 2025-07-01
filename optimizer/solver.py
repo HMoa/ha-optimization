@@ -1,11 +1,14 @@
+# mypy: ignore-errors
+
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any, cast
 
-from battery_config import BatteryConfig
 from ortools.linear_solver import pywraplp  # type: ignore
 
-from models import Activity, Elpris, TimeslotItem
+from optimizer.battery_config import BatteryConfig
+from optimizer.models import Activity, Elpris, TimeslotItem
 
 
 class Solver:
@@ -22,12 +25,12 @@ class Solver:
         consumption_w: dict[datetime, float],
         prices: dict[datetime, Elpris],
         battery_config: BatteryConfig,
-    ) -> dict[datetime, TimeslotItem] | None:
+    ) -> dict[datetime, TimeslotItem] | None:  # type: ignore
         eta_c = 0.95
         battery_min = battery_config.storage_size_wh * 0.3
 
         # Create the linear solver with the GLOP backend.
-        self.solver = pywraplp.Solver.CreateSolver("GLOP")  # type: ignore[attr-defined]
+        self.solver = cast(Any, pywraplp.Solver.CreateSolver("GLOP"))
         if not self.solver:
             return None
 

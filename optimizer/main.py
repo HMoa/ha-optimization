@@ -7,15 +7,18 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timedelta
 
 import matplotlib
 import matplotlib.pyplot as plt
-from battery_optimizer_workflow import BatteryOptimizerWorkflow
+
+from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow
+from optimizer.consumption_provider import get_consumption
+from optimizer.production_provider import get_production
 
 
 def plot_outcome(battery_percent: int) -> int:
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
-    # workflow.run_workflow()
     schedule = workflow.generate_schedule_from_file()
 
     if schedule is None:
@@ -103,9 +106,6 @@ def generate_schedule(battery_percent: int) -> None:
 
 
 def plot_consumption() -> None:
-    from datetime import datetime, timedelta
-
-    from consumption_provider import get_consumption
 
     start_date = datetime(2025, 6, 18, 0, 0, 0)  # 1st of June 2025
     consumption = get_consumption(start_date, start_date + timedelta(days=1))
@@ -119,9 +119,6 @@ def plot_consumption() -> None:
 
 
 def plot_production() -> None:
-    from datetime import datetime, timedelta
-
-    from production_provider import get_production
 
     start_date = datetime(2025, 6, 6, 0, 0, 0)  # 1st of June 2025
     production = get_production(start_date, start_date + timedelta(days=1))

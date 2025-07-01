@@ -5,7 +5,7 @@ from typing import Dict
 
 import requests
 
-from models import Elpris
+from optimizer.models import Elpris
 
 
 def fetch_electricity_prices(start_date: datetime) -> Dict[datetime, Elpris]:
