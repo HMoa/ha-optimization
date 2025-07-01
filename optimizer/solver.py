@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from battery_config import BatteryConfig
-from ortools.linear_solver import pywraplp
+from ortools.linear_solver import pywraplp  # type: ignore
 
 from models import Activity, Elpris, TimeslotItem
 
@@ -27,7 +27,7 @@ class Solver:
         battery_min = battery_config.storage_size_wh * 0.3
 
         # Create the linear solver with the GLOP backend.
-        self.solver = pywraplp.Solver.CreateSolver("GLOP")
+        self.solver = pywraplp.Solver.CreateSolver("GLOP")  # type: ignore[attr-defined]
         if not self.solver:
             return None
 

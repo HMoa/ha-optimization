@@ -4,7 +4,6 @@ import os
 from datetime import datetime, timedelta
 
 import joblib
-import numpy as np
 import pandas as pd
 
 
@@ -38,9 +37,7 @@ def get_production(start_date: datetime, end_date: datetime) -> dict[datetime, f
     df = pd.DataFrame(
         {
             "minutes_of_day": minutes_of_day,
-            "day_of_year": [dt.timetuple().tm_yday for dt in time_slots],
-            "minutes_sin": [np.sin(2 * np.pi * m / (24 * 60)) for m in minutes_of_day],
-            "minutes_cos": [np.cos(2 * np.pi * m / (24 * 60)) for m in minutes_of_day],
+            "week": [dt.isocalendar()[1] for dt in time_slots],
         }
     )
 

@@ -146,15 +146,24 @@ def main() -> None:
     )
     parser.add_argument(
         "--generate_schedule",
-        type=bool,
+        action="store_true",
         default=True,
-        help="Generate schedule",
+        help="Generate schedule (default: True)",
+    )
+    parser.add_argument(
+        "--plot_only",
+        action="store_true",
+        default=False,
+        help="Plot schedule instead of generating (default: generate schedule)",
     )
     args = parser.parse_args()
-    if args.generate_schedule:
-        generate_schedule(args.battery_percent)
-    else:
+
+    if args.plot_only:
+        print("Plotting schedule")
         sys.exit(plot_outcome(args.battery_percent))
+    else:
+        print("Generating schedule")
+        generate_schedule(args.battery_percent)
 
 
 if __name__ == "__main__":
