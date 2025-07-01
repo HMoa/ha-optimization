@@ -100,7 +100,7 @@ def main():
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
 
-    joblib.dump(model, "power-consumption.joblib")
+    joblib.dump(model, "../models/power-consumption.joblib")
 
     # Make predictions
     y_pred = model.predict(X_test)

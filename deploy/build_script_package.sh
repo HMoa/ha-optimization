@@ -19,9 +19,7 @@ mkdir -p ${PACKAGE_DIR}
 # Copy source code
 echo "Copying source code..."
 cp -r optimizer ${PACKAGE_DIR}/
-cp -r analytics ${PACKAGE_DIR}/
-cp -r tests ${PACKAGE_DIR}/
-cp -r sample_data ${PACKAGE_DIR}/
+cp -r models ${PACKAGE_DIR}/
 
 # Copy configuration files
 cp requirements.txt ${PACKAGE_DIR}/

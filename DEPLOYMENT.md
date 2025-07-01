@@ -5,6 +5,7 @@ This guide covers multiple deployment options for your Home Energy Optimizer on 
 ## Option 1: Automated Package Deployment (Recommended)
 
 ### Build the Package
+
 ```bash
 # Build a self-contained package
 ./deploy/build_package.sh
@@ -13,6 +14,7 @@ This guide covers multiple deployment options for your Home Energy Optimizer on 
 This creates `build/ha-optimizer-pi-1.0.0.tar.gz` with everything needed.
 
 ### Deploy on Raspberry Pi
+
 ```bash
 # Copy to Raspberry Pi (replace with your Pi's IP)
 scp build/ha-optimizer-pi-1.0.0.tar.gz pi@raspberrypi.local:~/
@@ -29,6 +31,7 @@ sudo ./deploy/install.sh
 ## Option 2: Manual Installation
 
 ### System Setup
+
 ```bash
 # Update system
 sudo apt-get update && sudo apt-get upgrade -y
@@ -47,7 +50,9 @@ pip install -r requirements.txt
 ## Configuration
 
 ### Battery Configuration
+
 Edit `optimizer/battery_config.py`:
+
 ```python
 BATTERY_CAPACITY = 10000  # Wh
 MAX_POWER = 5000  # W
@@ -56,19 +61,23 @@ MAX_SOC = 0.9  # 90%
 ```
 
 ### API Configuration
+
 Update `optimizer/elpris_api.py` with your API endpoints and credentials.
 
 ### Data Sources
+
 Configure your consumption and production data sources in the respective provider files.
 
 ## Monitoring and Logs
 
 ### Service Status
+
 ```bash
 sudo systemctl status ha-optimizer
 ```
 
 ### View Logs
+
 ```bash
 # Real-time logs
 sudo journalctl -u ha-optimizer -f
@@ -82,11 +91,13 @@ sudo journalctl -u ha-optimizer --since "1 hour ago"
 ### Common Issues
 
 1. **Permission Denied**
+
    ```bash
    sudo chown -R pi:pi /opt/ha-optimizer
    ```
 
 2. **Python Import Errors**
+
    ```bash
    # Reinstall in virtual environment
    source /opt/ha-optimizer/venv/bin/activate
@@ -94,6 +105,7 @@ sudo journalctl -u ha-optimizer --since "1 hour ago"
    ```
 
 3. **Memory Issues on Pi**
+
    ```bash
    # Add swap space
    sudo dphys-swapfile swapoff
@@ -122,6 +134,7 @@ sudo journalctl -u ha-optimizer --since "1 hour ago"
 ## Backup and Recovery
 
 ### Backup Configuration
+
 ```bash
 # Create backup
 tar -czf ha-optimizer-backup-$(date +%Y%m%d).tar.gz \
@@ -131,6 +144,7 @@ tar -czf ha-optimizer-backup-$(date +%Y%m%d).tar.gz \
 ```
 
 ### Restore Configuration
+
 ```bash
 # Extract backup
 tar -xzf ha-optimizer-backup-YYYYMMDD.tar.gz -C /
@@ -139,6 +153,7 @@ tar -xzf ha-optimizer-backup-YYYYMMDD.tar.gz -C /
 ## Updates
 
 ### Update Process
+
 ```bash
 # Stop service
 sudo systemctl stop ha-optimizer
@@ -161,6 +176,7 @@ sudo systemctl start ha-optimizer
 ## Performance Monitoring
 
 ### System Resources
+
 ```bash
 # CPU and memory usage
 htop
@@ -173,7 +189,9 @@ iftop
 ```
 
 ### Application Metrics
+
 Consider adding Prometheus metrics to your application for monitoring:
+
 - Optimization run times
 - Battery usage patterns
 - Prediction accuracy
@@ -181,6 +199,7 @@ Consider adding Prometheus metrics to your application for monitoring:
 ## Support
 
 For issues and questions:
+
 1. Check the logs first
 2. Review this deployment guide
 3. Check the main README.md for application-specific issues

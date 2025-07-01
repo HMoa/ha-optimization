@@ -1,4 +1,8 @@
+import os
 from datetime import datetime
+
+import joblib
+import pandas as pd
 
 
 def get_production(start_date: datetime, end_date: datetime):
@@ -13,14 +17,9 @@ def get_production(start_date: datetime, end_date: datetime):
 
     production_data = {}
     current_time = start_date
-    # INSERT_YOUR_CODE
-    import os
-
-    import joblib
-    import pandas as pd
 
     model_path = os.path.join(
-        os.path.dirname(__file__), "../analytics/pv_production.joblib"
+        os.path.dirname(__file__), "../models/pv_production.joblib"
     )
     model = joblib.load(model_path)
 

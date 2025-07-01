@@ -2,6 +2,7 @@
 """
 Console Application start
 """
+import argparse
 import json
 import sys
 
@@ -10,40 +11,10 @@ import matplotlib.pyplot as plt
 from battery_optimizer_workflow import BatteryOptimizerWorkflow
 
 
-def main():
-    """Main function of the application."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Battery Optimizer Workflow")
-    parser.add_argument(
-        "--battery_percent",
-        type=int,
-        default=84,
-        help="Initial battery percent",
-    )
-    args = parser.parse_args()
-
-    print(f"Initial battery percent: {args.battery_percent}")
-    workflow = BatteryOptimizerWorkflow(battery_percent=args.battery_percent)
+def plot_outcome(battery_percent):
+    workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
     # workflow.run_workflow()
     schedule = workflow.generate_schedule_from_file()
-
-    # Convert schedule to JSON-serializable format
-    schedule_json = {}
-    for timestamp, item in schedule.items():
-        schedule_json[timestamp.isoformat()] = {
-            "start_time": item.start_time.isoformat(),
-            "prices": item.prices,
-            "battery_flow": item.battery_flow,
-            "battery_expected_soc": item.battery_expected_soc,
-            "house_consumption": item.house_consumption,
-            "activity": item.activity.value,
-            "amount": item.amount,
-        }
-
-    # Save to file
-    with open("schedule.json", "w") as f:
-        json.dump(schedule_json, f, indent=2)
 
     fig, ax1 = plt.subplots()
 
@@ -100,6 +71,27 @@ def main():
     return 0
 
 
+def generate_schedule(battery_percent):
+    workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
+    schedule = workflow.generate_schedule()
+
+    schedule_json = {}
+    for timestamp, item in schedule.items():
+        schedule_json[timestamp.isoformat()] = {
+            "start_time": item.start_time.isoformat(),
+            "prices": item.prices,
+            "battery_flow": item.battery_flow,
+            "battery_expected_soc": item.battery_expected_soc,
+            "house_consumption": item.house_consumption,
+            "activity": item.activity.value,
+            "amount": item.amount,
+        }
+
+    # Save to file
+    with open("schedule.json", "w") as f:
+        json.dump(schedule_json, f, indent=2)
+
+
 def plot_consumption():
     from datetime import datetime, timedelta
 
@@ -132,9 +124,28 @@ def plot_production():
     plt.show()
 
 
+def main():
+    """Main function of the application."""
+
+    parser = argparse.ArgumentParser(description="Battery Optimizer Workflow")
+    parser.add_argument(
+        "--battery_percent",
+        type=int,
+        default=84,
+        help="Initial battery percent",
+    )
+    parser.add_argument(
+        "--generate_schedule",
+        type=bool,
+        default=True,
+        help="Generate schedule",
+    )
+    args = parser.parse_args()
+    if args.generate_schedule:
+        generate_schedule(args.battery_percent)
+    else:
+        sys.exit(plot_outcome(args.battery_percent))
+
+
 if __name__ == "__main__":
-    # This ensures that the main() function is called only when this script is run directly
-    # (not when imported as a module)
-    # sys.exit(main())
-    # sys.exit(plot_consumption())
-    sys.exit(plot_production())
+    main()

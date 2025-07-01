@@ -1,8 +1,11 @@
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
+
+import joblib
+import pandas as pd
 
 
 def get_consumption(start_date: datetime, end_date: datetime):
-    from datetime import timedelta
 
     # Snap start_date to the closest 5-minute interval
     start_date = start_date - timedelta(
@@ -11,16 +14,11 @@ def get_consumption(start_date: datetime, end_date: datetime):
         microseconds=start_date.microsecond,
     )
 
-    production_data = {}
     current_time = start_date
-    # INSERT_YOUR_CODE
-    import os
-
-    import joblib
-    import pandas as pd
+    production_data = {}
 
     model_path = os.path.join(
-        os.path.dirname(__file__), "../analytics/power-consumption.joblib"
+        os.path.dirname(__file__), "../models/power-consumption.joblib"
     )
     model = joblib.load(model_path)
 

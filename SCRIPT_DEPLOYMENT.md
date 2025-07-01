@@ -5,6 +5,7 @@ Simple deployment guide for running the Home Energy Optimizer as standalone scri
 ## Quick Deployment
 
 ### 1. Build the Package
+
 ```bash
 ./deploy/build_script_package.sh
 ```
@@ -12,6 +13,7 @@ Simple deployment guide for running the Home Energy Optimizer as standalone scri
 This creates `build/ha-optimizer-scripts-1.0.0.tar.gz`
 
 ### 2. Deploy to Raspberry Pi
+
 ```bash
 # Copy to Raspberry Pi
 scp build/ha-optimizer-scripts-1.0.0.tar.gz pi@raspberrypi.local:~/
@@ -26,6 +28,7 @@ cd ha-optimizer-scripts-1.0.0
 ```
 
 ### 3. Run the Optimizer
+
 ```bash
 # Activate virtual environment
 source venv/bin/activate
@@ -39,6 +42,7 @@ python run_optimizer.py
 If you prefer to copy files manually:
 
 ### 1. Copy Files
+
 ```bash
 # Create directory on Raspberry Pi
 mkdir -p ~/ha-optimizer
@@ -51,6 +55,7 @@ scp requirements.txt pi@raspberrypi.local:~/ha-optimizer/
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 # On Raspberry Pi
 python3 -m venv venv
@@ -59,6 +64,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. Run
+
 ```bash
 python -m optimizer.main
 ```
@@ -66,6 +72,7 @@ python -m optimizer.main
 ## Integration with External Tools
 
 ### Cron Job
+
 ```bash
 # Edit crontab
 crontab -e
@@ -75,6 +82,7 @@ crontab -e
 ```
 
 ### Systemd Timer (Alternative to Cron)
+
 ```bash
 # Create timer file
 sudo tee /etc/systemd/system/ha-optimizer.timer << EOF
@@ -113,6 +121,7 @@ sudo systemctl start ha-optimizer.timer
 ```
 
 ### Home Assistant Integration
+
 If you're using Home Assistant, you can trigger the script via:
 
 ```yaml
@@ -132,6 +141,7 @@ automation:
 ## Configuration
 
 ### Environment Variables
+
 You can set environment variables for configuration:
 
 ```bash
@@ -142,6 +152,7 @@ python run_optimizer.py
 ```
 
 ### Configuration File
+
 Create a `config.json` file:
 
 ```json
@@ -164,6 +175,7 @@ Create a `config.json` file:
 ```
 
 Then run with:
+
 ```bash
 python run_optimizer.py --config config.json
 ```
@@ -171,6 +183,7 @@ python run_optimizer.py --config config.json
 ## Monitoring and Logging
 
 ### Basic Logging
+
 The script will output to stdout/stderr. To capture logs:
 
 ```bash
@@ -178,6 +191,7 @@ python run_optimizer.py > optimizer.log 2>&1
 ```
 
 ### Rotating Logs
+
 ```bash
 # Install logrotate
 sudo apt-get install logrotate
@@ -201,6 +215,7 @@ EOF
 ### Common Issues
 
 1. **Import Errors**
+
    ```bash
    # Make sure virtual environment is activated
    source venv/bin/activate
@@ -210,6 +225,7 @@ EOF
    ```
 
 2. **Permission Errors**
+
    ```bash
    # Fix file permissions
    chmod +x run_optimizer.py
@@ -217,6 +233,7 @@ EOF
    ```
 
 3. **Memory Issues**
+
    ```bash
    # Check memory usage
    free -h
@@ -229,6 +246,7 @@ EOF
    ```
 
 4. **Network Issues**
+
    ```bash
    # Test network connectivity
    ping 8.8.8.8
@@ -238,6 +256,7 @@ EOF
    ```
 
 ### Debug Mode
+
 Run with debug mode for more information:
 
 ```bash
@@ -254,6 +273,7 @@ python run_optimizer.py --debug
 ## Backup
 
 ### Backup Configuration
+
 ```bash
 # Create backup
 tar -czf ha-optimizer-backup-$(date +%Y%m%d).tar.gz \
@@ -263,6 +283,7 @@ tar -czf ha-optimizer-backup-$(date +%Y%m%d).tar.gz \
 ```
 
 ### Restore
+
 ```bash
 # Extract backup
 tar -xzf ha-optimizer-backup-YYYYMMDD.tar.gz -C ~/

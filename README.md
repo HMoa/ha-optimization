@@ -16,7 +16,7 @@ This takes some inspiration from:
 - [ ] Test API for production forecast
   -- <https://openweathermap.org/api/solar-panels-and-energy-prediction>
 - [ ] Compare with cloud coverage
-- [ ] Split up tasks: fetch data, generate models, generate schedule
+- [ ] Split up tasks: fetch data & build models, generate schedule, act on schedule, review if we are on track
 
 ## Operational stuff
 
@@ -36,7 +36,7 @@ Features:
 - [x] Cyclic time
 - [ ] Previous values, 1h, 24h 7d and roling averages + std
 
-```
+```text
 === DAILY CONSUMPTION ANALYSIS ===
 Number of days: 14
 Average daily consumption: 15123.47 Wh (15.12 kWh)
