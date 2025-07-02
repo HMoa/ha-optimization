@@ -9,6 +9,7 @@ import json
 import sys
 from datetime import datetime, timedelta
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow
@@ -28,17 +29,17 @@ def plot_outcome(battery_percent: int) -> int:
 
     # Plot battery_flow and house_consumption on the left y-axis
     ax1.plot(
-        schedule.keys(),
+        list(schedule.keys()),
         [-item.battery_flow for item in schedule.values()],
         label="Battery Flow",
     )
     ax1.plot(
-        schedule.keys(),
+        list(schedule.keys()),
         [item.house_consumption for item in schedule.values()],
         label="House Consumption",
     )
     ax1.plot(
-        schedule.keys(),
+        list(schedule.keys()),
         [item.grid_flow for item in schedule.values()],
         label="Grid Flow",
         color="tab:purple",
@@ -50,7 +51,7 @@ def plot_outcome(battery_percent: int) -> int:
     # Create a second y-axis for prices
     ax2 = ax1.twinx()
     ax2.plot(
-        schedule.keys(),
+        list(schedule.keys()),
         [item.prices for item in schedule.values()],
         color="tab:red",
         label="Prices",
@@ -64,7 +65,7 @@ def plot_outcome(battery_percent: int) -> int:
     # Offset the third axis to the right
     ax3.spines["right"].set_position(("outward", 60))
     ax3.plot(
-        schedule.keys(),
+        list(schedule.keys()),
         [(item.battery_expected_soc / 440) for item in schedule.values()],
         color="tab:green",
         label="Battery SOC %",
@@ -110,7 +111,7 @@ def plot_consumption() -> None:
     consumption = get_consumption(start_date, start_date + timedelta(days=1))
 
     fig, ax1 = plt.subplots()
-    ax1.plot(consumption.keys(), consumption.values(), label="Consumption")
+    ax1.plot(list(consumption.keys()), list(consumption.values()), label="Consumption")
     ax1.set_ylabel("Consumption")
     ax1.set_xlabel("Time")
     ax1.legend(loc="upper left")
@@ -123,7 +124,7 @@ def plot_production() -> None:
     production = get_production(start_date, start_date + timedelta(days=1))
 
     fig, ax1 = plt.subplots()
-    ax1.plot(production.keys(), production.values(), label="Production")
+    ax1.plot(list(production.keys()), list(production.values()), label="Production")
     ax1.set_ylabel("Production")
     ax1.set_xlabel("Time")
     ax1.legend(loc="upper left")
