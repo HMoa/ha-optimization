@@ -25,24 +25,61 @@ def plot_outcome(battery_percent: int) -> int:
         print("No schedule available to plot")
         return 1
 
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize=(12, 8))
+
+    # Define colors for different activities
+    activity_colors = {
+        "charge": "#40EE60",  # Green
+        "charge_solar_surplus": "#FFFF00",  # Yellow
+        "charge_limit": "#00FFFF",  # Light blue
+        "discharge": "#FF2621",  # Red
+        "discharge_for_home": "#AAA500",  # Orange
+        "discharge_limit": "#FF8681",  # Light pink
+        "self_consumption": "#A6A6AA",  # Gray
+        "idle": "#000000",  # Black
+    }
+
+    # Create background bands for activities
+    timestamps = list(schedule.keys())
+    activities = [item.activity.value for item in schedule.values()]
+
+    # Group consecutive activities
+    current_activity = activities[0]
+    start_idx = 0
+
+    for i, activity in enumerate(activities):
+        if activity != current_activity:
+            # Color the background for the previous activity
+            color = activity_colors.get(current_activity, "#FFFFFF")
+            ax1.axvspan(
+                timestamps[start_idx], timestamps[i - 1], alpha=0.3, color=color
+            )
+            current_activity = activity
+            start_idx = i
+
+    # Color the last activity group
+    color = activity_colors.get(current_activity, "#FFFFFF")
+    ax1.axvspan(timestamps[start_idx], timestamps[-1], alpha=0.3, color=color)
 
     # Plot battery_flow and house_consumption on the left y-axis
     ax1.plot(
         list(schedule.keys()),
         [-item.battery_flow for item in schedule.values()],
         label="Battery Flow",
+        linewidth=2,
     )
     ax1.plot(
         list(schedule.keys()),
         [item.house_consumption for item in schedule.values()],
         label="House Consumption",
+        linewidth=2,
     )
     ax1.plot(
         list(schedule.keys()),
         [item.grid_flow for item in schedule.values()],
         label="Grid Flow",
         color="tab:purple",
+        linewidth=2,
     )
     ax1.set_ylabel("Battery Flow / House Consumption")
     ax1.set_xlabel("Time")
@@ -55,6 +92,7 @@ def plot_outcome(battery_percent: int) -> int:
         [item.prices for item in schedule.values()],
         color="tab:red",
         label="Prices",
+        linewidth=2,
     )
     ax2.set_ylabel("Prices", color="tab:red")
     ax2.tick_params(axis="y", labelcolor="tab:red")
@@ -69,12 +107,38 @@ def plot_outcome(battery_percent: int) -> int:
         [(item.battery_expected_soc / 440) for item in schedule.values()],
         color="tab:green",
         label="Battery SOC %",
+        linewidth=2,
     )
     ax3.set_ylabel("Battery SOC (Wh)", color="tab:green")
     ax3.tick_params(axis="y", labelcolor="tab:green")
     ax3.legend(loc="upper right", bbox_to_anchor=(1.15, 1))
 
+    # Add activity legend at the bottom
+    activity_legend_elements = []
+    for activity, color in activity_colors.items():
+        activity_legend_elements.append(
+            plt.Rectangle(
+                (0, 0),
+                1,
+                1,
+                facecolor=color,
+                alpha=0.3,
+                label=activity.replace("_", " ").title(),
+            )
+        )
+
+    # Create a separate legend for activities at the bottom
+    fig.legend(
+        activity_legend_elements,
+        [elem.get_label() for elem in activity_legend_elements],
+        loc="lower center",
+        ncol=4,
+        title="Activities",
+        bbox_to_anchor=(0.5, 0.02),
+    )
+
     plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)  # Make room for the activity legend
     plt.show()
 
     return 0

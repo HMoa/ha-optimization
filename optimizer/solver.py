@@ -119,7 +119,7 @@ class Solver:
         final_key = list(production_w.keys())[-1]
         self.solver.Add(
             battery_energy_wh[final_key]
-            >= battery_config.storage_size_wh * 0.5  # 20% minimum
+            >= battery_config.storage_size_wh * 0.5  # 50% minimum
         )
 
         # Objective: minimize the cost of grid import
@@ -150,63 +150,56 @@ class Solver:
                 grid_import_wh[i].solution_value() - grid_export_wh[i].solution_value()
             )
 
+            pris = prices[get_closest_price_timeslot(i)].get_spot_price()
+            expected_soc = battery_energy_wh[i].solution_value()
+            timeslot = TimeslotItem(
+                start_time=i,
+                prices=pris,
+                battery_flow=battery_flow,
+                battery_expected_soc=expected_soc,
+                house_consumption=need,
+                activity=Activity.CHARGE_LIMIT,
+                amount=battery_flow,
+                grid_flow=grid_flow,
+            )
+
+            schedule[i] = timeslot
+
             if battery_flow > 1:
-                if battery_flow <= need + 1:
-                    schedule[i] = TimeslotItem(
-                        start_time=i,
-                        prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=battery_flow,
-                        battery_expected_soc=battery_energy_wh[i].solution_value(),
-                        house_consumption=need,
-                        activity=Activity.SELF_CONSUMPTION,
-                        grid_flow=grid_flow,
-                    )
-                else:
-                    schedule[i] = TimeslotItem(
-                        start_time=i,
-                        prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=battery_flow,
-                        battery_expected_soc=battery_energy_wh[i].solution_value(),
-                        house_consumption=need,
-                        activity=Activity.CHARGE,
-                        amount=battery_flow,
-                        grid_flow=grid_flow,
-                    )
+                if (
+                    battery_flow <= -need - 10
+                ):  # We are storing less than we create. Limit the charge.
+                    timeslot.activity = Activity.CHARGE_LIMIT
+
+                elif battery_flow < -need + 5:  # We are storing all we create.
+                    timeslot.activity = Activity.CHARGE_SOLAR_SURPLUS
+
+                else:  # We are storing more than we create. Charge from grid.
+                    timeslot.activity = Activity.CHARGE
 
             elif battery_flow < -1:
-                if -battery_flow <= need + 1:
-                    schedule[i] = TimeslotItem(
-                        start_time=i,
-                        prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=battery_flow,
-                        battery_expected_soc=battery_energy_wh[i].solution_value(),
-                        house_consumption=need,
-                        activity=Activity.SELF_CONSUMPTION,
-                        amount=battery_flow,
-                        grid_flow=grid_flow,
-                    )
+                if (
+                    -battery_flow <= need - 10
+                ):  # We are using less battery than the house requires. Limit the discharge.
+                    timeslot.activity = Activity.DISCHARGE_LIMIT
 
-                else:
-                    schedule[i] = TimeslotItem(
-                        start_time=i,
-                        prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                        battery_flow=battery_flow,
-                        battery_expected_soc=battery_energy_wh[i].solution_value(),
-                        house_consumption=need,
-                        activity=Activity.DISCHARGE,
-                        grid_flow=grid_flow,
-                    )
+                elif (
+                    -battery_flow <= need + 5
+                ):  # We are using battery to fullfill the house's needs.
+                    timeslot.activity = Activity.DISCHARGE_FOR_HOME
 
-            else:
-                schedule[i] = TimeslotItem(
-                    start_time=i,
-                    prices=prices[get_closest_price_timeslot(i)].get_spot_price(),
-                    battery_flow=battery_flow,
-                    battery_expected_soc=battery_energy_wh[i].solution_value(),
-                    house_consumption=need,
-                    activity=Activity.IDLE,
-                    grid_flow=grid_flow,
-                )
+                else:  # We are discharging more battery than the house requires. Sell to the grid.
+                    timeslot.activity = Activity.DISCHARGE
+
+            else:  # If we don't currently have any flow, but the predictions are inacurate. What is the intention?
+                if (
+                    grid_flow > 0
+                ):  # We are buying from the grid, so charge solar since it's cheap.
+                    timeslot.activity = Activity.CHARGE_SOLAR_SURPLUS
+                elif (
+                    grid_flow < 0
+                ):  # We are selling to the grid, so discharge for home since it's expensive.
+                    timeslot.activity = Activity.DISCHARGE_FOR_HOME
 
         return schedule
 

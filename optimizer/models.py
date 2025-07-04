@@ -7,7 +7,11 @@ from enum import Enum
 
 class Activity(Enum):
     CHARGE = "charge"
+    CHARGE_SOLAR_SURPLUS = "charge_solar_surplus"
+    CHARGE_LIMIT = "charge_limit"
     DISCHARGE = "discharge"
+    DISCHARGE_FOR_HOME = "discharge_for_home"
+    DISCHARGE_LIMIT = "discharge_limit"
     SELF_CONSUMPTION = "self_consumption"
     IDLE = "idle"
 
