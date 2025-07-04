@@ -64,24 +64,26 @@ def plot_outcome(battery_percent: int) -> int:
     # Plot battery_flow and house_consumption on the left y-axis
     ax1.plot(
         list(schedule.keys()),
-        [-item.battery_flow for item in schedule.values()],
+        [
+            -item.battery_flow * 12 for item in schedule.values()
+        ],  # Convert Wh to W (5-min timeslots)
         label="Battery Flow",
         linewidth=2,
     )
     ax1.plot(
         list(schedule.keys()),
-        [item.house_consumption for item in schedule.values()],
+        [item.house_consumption * 12 for item in schedule.values()],  # Convert Wh to W
         label="House Consumption",
         linewidth=2,
     )
     ax1.plot(
         list(schedule.keys()),
-        [item.grid_flow for item in schedule.values()],
+        [item.grid_flow * 12 for item in schedule.values()],  # Convert Wh to W
         label="Grid Flow",
         color="tab:purple",
         linewidth=2,
     )
-    ax1.set_ylabel("Battery Flow / House Consumption")
+    ax1.set_ylabel("Power (W)")
     ax1.set_xlabel("Time")
     ax1.legend(loc="upper left")
 
