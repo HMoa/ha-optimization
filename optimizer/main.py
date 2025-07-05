@@ -146,9 +146,22 @@ def plot_outcome(battery_percent: int) -> int:
     return 0
 
 
-def generate_schedule(battery_percent: int) -> None:
+def generate_schedule(
+    battery_percent: int,
+    initial_lag_1: float = None,
+    initial_lag_2: float = None,
+    initial_rolling_mean: float = None,
+    initial_rolling_std: float = None,
+    initial_consumption_values: list[float] = None,
+) -> None:
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
-    workflow.generate_schedule()
+    workflow.generate_schedule(
+        initial_lag_1=initial_lag_1,
+        initial_lag_2=initial_lag_2,
+        initial_rolling_mean=initial_rolling_mean,
+        initial_rolling_std=initial_rolling_std,
+        initial_consumption_values=initial_consumption_values,
+    )
 
     if workflow.schedule is None:
         print("No schedule generated")
@@ -219,6 +232,32 @@ def main() -> None:
         default=False,
         help="Plot schedule instead of generating (default: generate schedule)",
     )
+    parser.add_argument(
+        "--initial_lag_1",
+        type=float,
+        help="Initial consumption value 5 minutes ago (W)",
+    )
+    parser.add_argument(
+        "--initial_lag_2",
+        type=float,
+        help="Initial consumption value 10 minutes ago (W)",
+    )
+    parser.add_argument(
+        "--initial_rolling_mean",
+        type=float,
+        help="Initial rolling mean consumption value (W)",
+    )
+    parser.add_argument(
+        "--initial_rolling_std",
+        type=float,
+        help="Initial rolling standard deviation consumption value (W)",
+    )
+    parser.add_argument(
+        "--initial_consumption_values",
+        type=float,
+        nargs="+",
+        help="List of initial consumption values (most recent last, 5-minute intervals)",
+    )
     args = parser.parse_args()
 
     if args.plot_only:
@@ -226,7 +265,14 @@ def main() -> None:
         sys.exit(plot_outcome(args.battery_percent))
     else:
         print("Generating schedule")
-        generate_schedule(args.battery_percent)
+        generate_schedule(
+            args.battery_percent,
+            initial_lag_1=args.initial_lag_1,
+            initial_lag_2=args.initial_lag_2,
+            initial_rolling_mean=args.initial_rolling_mean,
+            initial_rolling_std=args.initial_rolling_std,
+            initial_consumption_values=args.initial_consumption_values,
+        )
 
 
 if __name__ == "__main__":

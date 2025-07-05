@@ -16,6 +16,7 @@ python-dateutil==2.9.0.post0
 pytz==2025.2
 requests==2.32.3
 scikit-learn==1.5.2
+seaborn==0.13.2
 six==1.17.0
 types-requests==2.32.0.20250328
 typing_extensions==4.13.1

@@ -3,9 +3,13 @@ from __future__ import annotations
 import os
 import pickle
 from datetime import datetime, timedelta
+from typing import List, Optional
 
 from optimizer.battery_config import BatteryConfig
-from optimizer.consumption_provider import get_consumption
+from optimizer.consumption_provider import (
+    get_consumption_iterative,
+    get_consumption_with_initial_values,
+)
 from optimizer.elpris_api import fetch_electricity_prices
 from optimizer.models import Elpris, TimeslotItem
 from optimizer.production_provider import get_production
@@ -24,12 +28,50 @@ class BatteryOptimizerWorkflow:
         self.solver = Solver(timeslot_length=5)
         self.schedule: dict[datetime, TimeslotItem] | None = None
 
-    def generate_schedule(self) -> None:
+    def generate_schedule(
+        self,
+        initial_lag_1: Optional[float] = None,
+        initial_lag_2: Optional[float] = None,
+        initial_rolling_mean: Optional[float] = None,
+        initial_rolling_std: Optional[float] = None,
+        initial_consumption_values: Optional[List[float]] = None,
+    ) -> None:
         start_date = self.get_current_timeslot()
         prices = fetch_electricity_prices(start_date)
         end_date = max(prices.keys())
 
-        consumption = get_consumption(start_date, end_date)
+        # Use the appropriate consumption method based on provided parameters
+        if initial_consumption_values is not None:
+            print(
+                f"Using consumption prediction with {len(initial_consumption_values)} initial values"
+            )
+            consumption = get_consumption_with_initial_values(
+                start_date, end_date, initial_consumption_values
+            )
+        elif any(
+            param is not None
+            for param in [
+                initial_lag_1,
+                initial_lag_2,
+                initial_rolling_mean,
+                initial_rolling_std,
+            ]
+        ):
+            print("Using iterative consumption prediction with custom initial values")
+            consumption = get_consumption_iterative(
+                start_date,
+                end_date,
+                initial_lag_1=initial_lag_1,
+                initial_lag_2=initial_lag_2,
+                initial_rolling_mean=initial_rolling_mean,
+                initial_rolling_std=initial_rolling_std,
+            )
+        else:
+            print("Using default consumption prediction")
+            from optimizer.consumption_provider import get_consumption
+
+            consumption = get_consumption(start_date, end_date)
+
         production = get_production(start_date, end_date)
 
         schedule = self.solver.create_schedule(

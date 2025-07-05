@@ -9,9 +9,6 @@ def analyze_daily_consumption(df: pd.DataFrame) -> pd.Series:
 
     print("Loading consumption data...")
 
-    # Load the consumption data
-    df = pd.read_csv("consumed-power.csv", parse_dates=["time"], sep=",")
-
     # Remove null values
     df = df.dropna(subset=["time", "value"])
 
@@ -74,6 +71,6 @@ def analyze_daily_consumption(df: pd.DataFrame) -> pd.Series:
 
 if __name__ == "__main__":
     # Load the consumption data
-    df = pd.read_csv("consumed-power.csv", parse_dates=["time"], sep=",")
+    df = pd.read_csv("analytics/consumption250705-2.csv", parse_dates=["time"], sep=",")
     df = df.dropna(subset=["time", "value"])
     analyze_daily_consumption(df)
