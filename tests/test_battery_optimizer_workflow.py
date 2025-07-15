@@ -66,11 +66,12 @@ class TestBatteryOptimizerWorkflow(unittest.TestCase):
             datetime(2025, 1, 1, 10, 0, 0): TimeslotItem(
                 start_time=datetime(2025, 1, 1, 10, 0, 0),
                 prices=1.0,
-                battery_flow=0.0,
-                battery_expected_soc=22000.0,
-                house_consumption=1000.0,
+                battery_flow_wh=0.0,
+                battery_expected_soc_wh=22000.0,
+                battery_expected_soc_percent=50.0,
+                house_consumption_wh=1000.0,
                 activity=Activity.IDLE,
-                grid_flow=0.0,
+                grid_flow_wh=0.0,
             )
         }
 

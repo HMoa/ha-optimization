@@ -66,20 +66,22 @@ def plot_outcome(battery_percent: int) -> int:
     ax1.plot(
         list(schedule.keys()),
         [
-            -item.battery_flow * 12 for item in schedule.values()
+            -item.battery_flow_wh * 12 for item in schedule.values()
         ],  # Convert Wh to W (5-min timeslots)
         label="Battery Flow",
         linewidth=2,
     )
     ax1.plot(
         list(schedule.keys()),
-        [item.house_consumption * 12 for item in schedule.values()],  # Convert Wh to W
+        [
+            item.house_consumption_wh * 12 for item in schedule.values()
+        ],  # Convert Wh to W
         label="House Consumption",
         linewidth=2,
     )
     ax1.plot(
         list(schedule.keys()),
-        [item.grid_flow * 12 for item in schedule.values()],  # Convert Wh to W
+        [item.grid_flow_wh * 12 for item in schedule.values()],  # Convert Wh to W
         label="Grid Flow",
         color="tab:purple",
         linewidth=2,
@@ -107,7 +109,7 @@ def plot_outcome(battery_percent: int) -> int:
     ax3.spines["right"].set_position(("outward", 60))
     ax3.plot(
         list(schedule.keys()),
-        [(item.battery_expected_soc / 440) for item in schedule.values()],
+        [(item.battery_expected_soc_wh / 440) for item in schedule.values()],
         color="tab:green",
         label="Battery SOC %",
         linewidth=2,
@@ -173,9 +175,9 @@ def generate_schedule(
         schedule_json[timestamp.isoformat()] = {
             "start_time": item.start_time.isoformat(),
             "prices": item.prices,
-            "battery_flow": item.battery_flow,
-            "battery_expected_soc": item.battery_expected_soc,
-            "house_consumption": item.house_consumption,
+            "battery_flow": item.battery_flow_wh,
+            "battery_expected_soc": item.battery_expected_soc_wh,
+            "house_consumption": item.house_consumption_wh,
             "activity": item.activity.value,
             "amount": item.amount,
         }

@@ -21,12 +21,24 @@ class TimeslotItem:
 
     start_time: datetime
     prices: float
-    battery_flow: float
-    battery_expected_soc: float
-    house_consumption: float
+    battery_flow_wh: float
+    battery_expected_soc_wh: float
+    battery_expected_soc_percent: float
+    house_consumption_wh: float
     activity: Activity
-    grid_flow: float  # Positive for import, negative for export
+    grid_flow_wh: float  # Positive for import, negative for export
     amount: float | None = None
+
+    def __post_init__(self) -> None:
+        """Round all float values to 2 decimal places after initialization."""
+        self.prices = round(self.prices, 2)
+        self.battery_flow_wh = round(self.battery_flow_wh, 2)
+        self.battery_expected_soc_wh = round(self.battery_expected_soc_wh, 2)
+        self.battery_expected_soc_percent = round(self.battery_expected_soc_percent, 2)
+        self.house_consumption_wh = round(self.house_consumption_wh, 2)
+        self.grid_flow_wh = round(self.grid_flow_wh, 2)
+        if self.amount is not None:
+            self.amount = round(self.amount, 2)
 
 
 nätnytta = 0.08

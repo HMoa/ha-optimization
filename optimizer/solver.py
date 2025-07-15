@@ -156,13 +156,13 @@ class Solver:
             timeslot = TimeslotItem(
                 start_time=i,
                 prices=pris,
-                battery_flow=battery_flow,
-                battery_expected_soc=expected_soc,
+                battery_flow_wh=battery_flow,
+                battery_expected_soc_wh=expected_soc,
                 battery_expected_soc_percent=expected_soc_percent,
-                house_consumption=need,
+                house_consumption_wh=need,
                 activity=Activity.CHARGE_LIMIT,
-                amount=battery_flow,
-                grid_flow=grid_flow,
+                amount=battery_flow * (60 / self.timeslot_length),  # Convert Wh to W
+                grid_flow_wh=grid_flow,
             )
 
             schedule[i] = timeslot
