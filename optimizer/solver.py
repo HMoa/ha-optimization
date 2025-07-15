@@ -152,11 +152,13 @@ class Solver:
 
             pris = prices[get_closest_price_timeslot(i)].get_spot_price()
             expected_soc = battery_energy_wh[i].solution_value()
+            expected_soc_percent = (expected_soc / battery_config.storage_size_wh) * 100
             timeslot = TimeslotItem(
                 start_time=i,
                 prices=pris,
                 battery_flow=battery_flow,
                 battery_expected_soc=expected_soc,
+                battery_expected_soc_percent=expected_soc_percent,
                 house_consumption=need,
                 activity=Activity.CHARGE_LIMIT,
                 amount=battery_flow,

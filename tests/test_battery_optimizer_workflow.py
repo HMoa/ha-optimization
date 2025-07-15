@@ -81,7 +81,7 @@ class TestBatteryOptimizerWorkflow(unittest.TestCase):
                 "optimizer.battery_optimizer_workflow.fetch_electricity_prices"
             ) as mock_prices:
                 with patch(
-                    "optimizer.battery_optimizer_workflow.get_consumption"
+                    "optimizer.consumption_provider.get_consumption"
                 ) as mock_consumption:
                     with patch(
                         "optimizer.battery_optimizer_workflow.get_production"

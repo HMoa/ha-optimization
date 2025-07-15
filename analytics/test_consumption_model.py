@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
 
 import joblib
 import numpy as np
@@ -130,7 +128,7 @@ def main() -> None:
         return
 
     # Display results
-    print(f"\nPrediction Results (showing first 10 records):")
+    print("\nPrediction Results (showing first 10 records):")
     print("=" * 80)
     print(
         f"{'Time':<20} {'Actual (W)':<12} {'Predicted (W)':<15} {'Difference (W)':<15}"
@@ -158,14 +156,14 @@ def main() -> None:
             (actual_values - actual_values.mean()) ** 2
         )
 
-        print(f"\nOverall Performance:")
+        print("\nOverall Performance:")
         print(f"  RMSE: {rmse:.2f} W")
         print(f"  MAE:  {mae:.2f} W")
         print(f"  R²:   {r2:.4f}")
         print(f"  Predictions made: {len(results)} out of {len(test_subset)} records")
 
         # Show some statistics
-        print(f"\nData Statistics:")
+        print("\nData Statistics:")
         print(
             f"  Actual consumption range: {actual_values.min():.1f} - {actual_values.max():.1f} W"
         )

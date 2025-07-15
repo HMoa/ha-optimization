@@ -8,12 +8,13 @@ import argparse
 import json
 import sys
 from datetime import datetime, timedelta
+from typing import Optional
 
-import matplotlib
 import matplotlib.pyplot as plt
 
 from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow
 from optimizer.consumption_provider import get_consumption
+from optimizer.influxdb_client import get_initial_consumption_values
 from optimizer.production_provider import get_production
 
 
@@ -148,11 +149,11 @@ def plot_outcome(battery_percent: int) -> int:
 
 def generate_schedule(
     battery_percent: int,
-    initial_lag_1: float = None,
-    initial_lag_2: float = None,
-    initial_rolling_mean: float = None,
-    initial_rolling_std: float = None,
-    initial_consumption_values: list[float] = None,
+    initial_lag_1: Optional[float] = None,
+    initial_lag_2: Optional[float] = None,
+    initial_rolling_mean: Optional[float] = None,
+    initial_rolling_std: Optional[float] = None,
+    initial_consumption_values: Optional[list[float]] = None,
 ) -> None:
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
     workflow.generate_schedule(
@@ -258,20 +259,77 @@ def main() -> None:
         nargs="+",
         help="List of initial consumption values (most recent last, 5-minute intervals)",
     )
+    parser.add_argument(
+        "--use_influxdb",
+        action="store_true",
+        default=False,
+        help="Fetch initial consumption values from InfluxDB",
+    )
+    parser.add_argument(
+        "--influxdb_config",
+        type=str,
+        default="config/influxdb_config.json",
+        help="Path to InfluxDB configuration file",
+    )
+    parser.add_argument(
+        "--current-schedule",
+        action="store_true",
+        default=False,
+        help="Print the current item in schedule.json (closest to now, not after)",
+    )
     args = parser.parse_args()
+
+    if args.current_schedule:
+        try:
+            with open("schedule.json", "r") as f:
+                schedule = json.load(f)
+            now = datetime.now().astimezone()
+            # Sort the keys and loop through, taking the last one not after now
+            last_key = None
+            for k in sorted(schedule.keys()):
+                dt = datetime.fromisoformat(k)
+                if dt <= now:
+                    last_key = k
+                else:
+                    break
+            if last_key is not None:
+                print(json.dumps(schedule[last_key], indent=2))
+            else:
+                print("No schedule item found for the current time or earlier.")
+        except Exception as e:
+            print(f"Error reading schedule.json: {e}")
+        sys.exit(0)
 
     if args.plot_only:
         print("Plotting schedule")
         sys.exit(plot_outcome(args.battery_percent))
     else:
         print("Generating schedule")
+
+        # Handle InfluxDB integration
+        initial_consumption_values = args.initial_consumption_values
+        if args.use_influxdb:
+            print("Fetching initial consumption values from InfluxDB...")
+            try:
+                influx_values = get_initial_consumption_values(args.influxdb_config)
+                if influx_values:
+                    initial_consumption_values = influx_values
+                    print(f"Using {len(influx_values)} values from InfluxDB")
+                else:
+                    print(
+                        "Warning: No data from InfluxDB, falling back to other methods"
+                    )
+            except Exception as e:
+                print(f"Error fetching from InfluxDB: {e}")
+                print("Falling back to other methods")
+
         generate_schedule(
             args.battery_percent,
             initial_lag_1=args.initial_lag_1,
             initial_lag_2=args.initial_lag_2,
             initial_rolling_mean=args.initial_rolling_mean,
             initial_rolling_std=args.initial_rolling_std,
-            initial_consumption_values=args.initial_consumption_values,
+            initial_consumption_values=initial_consumption_values,
         )
 
 

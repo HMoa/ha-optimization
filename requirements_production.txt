@@ -1,0 +1,19 @@
+# Production requirements for HA Optimizer
+# Only includes packages actually used in the optimizer folder
+
+# Core ML and data processing
+joblib==1.4.2
+numpy==2.2.4
+pandas==2.2.3
+
+# HTTP requests for electricity price API
+requests==2.32.3
+
+# InfluxDB client for fetching consumption data
+influxdb==5.3.1
+
+# Linear optimization solver
+ortools==9.12.4544
+
+# Optional: Plotting (only needed if using --plot_only)
+matplotlib==3.9.1
