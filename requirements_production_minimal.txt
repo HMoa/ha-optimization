@@ -5,6 +5,7 @@
 joblib==1.4.2
 numpy==2.2.4
 pandas==2.2.3
+scikit-learn==1.7.1
 
 # HTTP requests for electricity price API
 requests==2.32.3
@@ -13,4 +14,4 @@ requests==2.32.3
 influxdb==5.3.1
 
 # Linear optimization solver
-ortools==9.12.4544
+ortools==9.14.6206

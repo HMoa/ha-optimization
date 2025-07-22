@@ -17,7 +17,7 @@ from optimizer.solver import Solver
 
 
 class BatteryOptimizerWorkflow:
-    def __init__(self, battery_percent: int) -> None:
+    def __init__(self, battery_percent: float) -> None:
         self.config = BatteryConfig.default_config()
         self.config.initial_energy = float(
             battery_percent * self.config.storage_size_wh / 100

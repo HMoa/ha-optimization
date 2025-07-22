@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Console Application start
 """
@@ -10,8 +10,6 @@ import sys
 from datetime import datetime, timedelta
 from typing import Optional
 
-import matplotlib.pyplot as plt
-
 from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow
 from optimizer.consumption_provider import get_consumption
 from optimizer.influxdb_client import get_initial_consumption_values
@@ -19,6 +17,8 @@ from optimizer.production_provider import get_production
 
 
 def plot_outcome(battery_percent: int) -> int:
+    import matplotlib.pyplot as plt
+
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
     schedule = workflow.generate_schedule_from_file()
 
@@ -150,13 +150,15 @@ def plot_outcome(battery_percent: int) -> int:
 
 
 def generate_schedule(
-    battery_percent: int,
+    battery_percent: float,
     initial_lag_1: Optional[float] = None,
     initial_lag_2: Optional[float] = None,
     initial_rolling_mean: Optional[float] = None,
     initial_rolling_std: Optional[float] = None,
     initial_consumption_values: Optional[list[float]] = None,
+    save: bool = False,
 ) -> None:
+
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
     workflow.generate_schedule(
         initial_lag_1=initial_lag_1,
@@ -176,7 +178,7 @@ def generate_schedule(
             "start_time": item.start_time.isoformat(),
             "prices": item.prices,
             "battery_flow": item.battery_flow_wh,
-            "battery_expected_soc": item.battery_expected_soc_wh,
+            "battery_expected_soc": item.battery_expected_soc_percent,
             "house_consumption": item.house_consumption_wh,
             "activity": item.activity.value,
             "amount": item.amount,
@@ -186,31 +188,22 @@ def generate_schedule(
     with open("schedule.json", "w") as f:
         json.dump(schedule_json, f, indent=2)
 
+    if save:
+        import os
+        import pickle
 
-def plot_consumption() -> None:
-
-    start_date = datetime(2025, 6, 18, 0, 0, 0)  # 1st of June 2025
-    consumption = get_consumption(start_date, start_date + timedelta(days=1))
-
-    fig, ax1 = plt.subplots()
-    ax1.plot(list(consumption.keys()), list(consumption.values()), label="Consumption")
-    ax1.set_ylabel("Consumption")
-    ax1.set_xlabel("Time")
-    ax1.legend(loc="upper left")
-    plt.show()
-
-
-def plot_production() -> None:
-
-    start_date = datetime(2025, 6, 6, 0, 0, 0)  # 1st of June 2025
-    production = get_production(start_date, start_date + timedelta(days=1))
-
-    fig, ax1 = plt.subplots()
-    ax1.plot(list(production.keys()), list(production.values()), label="Production")
-    ax1.set_ylabel("Production")
-    ax1.set_xlabel("Time")
-    ax1.legend(loc="upper left")
-    plt.show()
+        # Save params for later use
+        params = [
+            workflow.production,
+            workflow.consumption,
+            workflow.prices,
+            workflow.config,
+        ]
+        sample_data_dir = os.path.join(os.path.dirname(__file__), "../sample_data")
+        os.makedirs(sample_data_dir, exist_ok=True)
+        sample_data_path = os.path.join(sample_data_dir, "optimizer_params.pkl")
+        with open(sample_data_path, "wb") as f:
+            pickle.dump(params, f)
 
 
 def main() -> None:
@@ -219,7 +212,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Battery Optimizer Workflow")
     parser.add_argument(
         "--battery_percent",
-        type=int,
+        type=float,
         default=84,
         help="Initial battery percent",
     )
@@ -279,6 +272,12 @@ def main() -> None:
         default=False,
         help="Print the current item in schedule.json (closest to now, not after)",
     )
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        default=False,
+        help="Save optimizer parameters to sample_data/optimizer_params.pkl",
+    )
     args = parser.parse_args()
 
     if args.current_schedule:
@@ -332,6 +331,7 @@ def main() -> None:
             initial_rolling_mean=args.initial_rolling_mean,
             initial_rolling_std=args.initial_rolling_std,
             initial_consumption_values=initial_consumption_values,
+            save=args.save,
         )
 
 

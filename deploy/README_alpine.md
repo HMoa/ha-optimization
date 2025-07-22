@@ -2,6 +2,9 @@
 
 This guide is specifically for deploying the HA Optimizer on Home Assistant OS, which runs Alpine Linux.
 
+## Summary
+Run: cd /root/addon_configs/a0d7b954_nodered/files && /tmp/optimizer_venv/bin/python -m optimizer.main --current-schedule to get current schedule to pass to the inverter.
+
 ## System Requirements
 
 - Home Assistant OS on Raspberry Pi
@@ -83,7 +86,7 @@ pip install joblib==1.4.2
 
 ```bash
 # Activate virtual environment
-source .venv/bin/activate
+source /tmp/optimizer_venv/bin/activate
 
 # Run with InfluxDB integration
 python -m optimizer.main --fetch-influxdb
@@ -115,3 +118,10 @@ python -m optimizer.main
 - Package names may differ from Debian/Ubuntu
 - Some Python packages may need to be compiled from source
 - Smaller disk footprint but potentially longer compilation times
+
+---
+
+**Summary:**
+Moving a venv on the same machine is fine. Just update your references to the new path. If you run into issues, you can always recreate the venv in the new location and reinstall your requirements.
+
+Let me know if you want a command to update the activation script or need help with anything else!

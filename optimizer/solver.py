@@ -135,7 +135,10 @@ class Solver:
             objective.SetCoefficient(battery_charge_wh[i], 0.01)  # Penalty for charging
         objective.SetMinimization()
 
+        print("Solving... ")
         result = self.solver.Solve()
+        print("Solved with status: ", result)
+
         if result != pywraplp.Solver.OPTIMAL and result != pywraplp.Solver.FEASIBLE:
             return None
 
