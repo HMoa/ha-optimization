@@ -182,6 +182,7 @@ def generate_schedule(
             "house_consumption": item.house_consumption_wh,
             "activity": item.activity.value,
             "amount": item.amount,
+            "amount_percent": item.amount_percent(),
         }
 
     # Save to file

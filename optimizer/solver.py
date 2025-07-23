@@ -116,11 +116,11 @@ class Solver:
             previous_key = i
 
         # End-of-horizon constraint: ensure minimum SOC at the end
-        final_key = list(production_w.keys())[-1]
-        self.solver.Add(
-            battery_energy_wh[final_key]
-            >= battery_config.storage_size_wh * 0.5  # 50% minimum
-        )
+        # final_key = list(production_w.keys())[-1]
+        # self.solver.Add(
+        #    battery_energy_wh[final_key]
+        #    >= battery_config.storage_size_wh * 0.5  # 50% minimum
+        # )
 
         # Objective: minimize the cost of grid import
         objective = self.solver.Objective()

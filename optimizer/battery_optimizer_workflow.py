@@ -81,14 +81,6 @@ class BatteryOptimizerWorkflow:
             print("No schedule found")
             return
 
-        # Save params for later use
-        params = [production, consumption, prices, self.config]
-        sample_data_dir = os.path.join(os.path.dirname(__file__), "../sample_data")
-        os.makedirs(sample_data_dir, exist_ok=True)
-        sample_data_path = os.path.join(sample_data_dir, "optimizer_params.pkl")
-        with open(sample_data_path, "wb") as f:
-            pickle.dump(params, f)
-
         self.schedule = schedule
 
     def generate_schedule_from_file(self) -> dict[datetime, TimeslotItem] | None:

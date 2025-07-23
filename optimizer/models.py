@@ -29,6 +29,10 @@ class TimeslotItem:
     grid_flow_wh: float  # Positive for import, negative for export
     amount: float | None = None
 
+    real_battery_flow_w: float = (
+        10000  # We want the percent of real max, not optimizer max allowed
+    )
+
     def __post_init__(self) -> None:
         """Round all float values to 2 decimal places after initialization."""
         self.prices = round(self.prices, 2)
@@ -39,6 +43,9 @@ class TimeslotItem:
         self.grid_flow_wh = round(self.grid_flow_wh, 2)
         if self.amount is not None:
             self.amount = round(self.amount, 2)
+
+    def amount_percent(self) -> int:  # Percent in minor units
+        return int(abs(self.amount / self.real_battery_flow_w) * 10000)
 
 
 nätnytta = 0.08
