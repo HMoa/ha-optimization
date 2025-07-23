@@ -125,18 +125,6 @@ def plot_feature_importance(
         {"feature": feature_names, "importance": importance}
     ).sort_values("importance", ascending=False)
 
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=importance_df, x="importance", y="feature")
-    plt.title(f"Feature Importance - {model_name} (Baseline)")
-    plt.xlabel("Importance")
-    plt.tight_layout()
-    plt.savefig(
-        f'feature_importance_{model_name.lower().replace(" ", "_")}_baseline.png',
-        dpi=300,
-        bbox_inches="tight",
-    )
-    plt.close()
-
 
 def main() -> None:
     """Main function to train and evaluate baseline consumption model"""
@@ -144,7 +132,7 @@ def main() -> None:
     print("Using only basic time features for baseline performance")
 
     # Load and prepare data
-    data_file = "consumed-power.csv"
+    data_file = "consumption250723.csv"
     df = load_and_clean_data(data_file)
 
     # Add basic features only

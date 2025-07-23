@@ -220,6 +220,27 @@ class InfluxDBClientWrapper:
             print(f"Connection test failed: {e}")
             return False
 
+    def write_point(
+        self, measurement: str, fields: dict, tags: dict = None, timestamp: str = None
+    ) -> None:
+        """
+        Write a single point to InfluxDB.
+        Args:
+            measurement: Measurement name
+            fields: Dictionary of field values
+            tags: Optional dictionary of tags
+            timestamp: Optional ISO8601 timestamp string
+        """
+        point = {
+            "measurement": measurement,
+            "fields": fields,
+        }
+        if tags:
+            point["tags"] = tags
+        if timestamp:
+            point["time"] = timestamp
+        self.client.write_points([point])
+
 
 def get_initial_consumption_values(
     config_path: str = "config/influxdb_config.json",

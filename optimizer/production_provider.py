@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta
 
 import joblib
+import numpy as np
 import pandas as pd
 
 
@@ -31,13 +32,20 @@ def get_production(start_date: datetime, end_date: datetime) -> dict[datetime, f
         t += timedelta(minutes=5)
 
     # Prepare features for prediction
-    # Calculate minutes of day for cyclic encoding
+    # Calculate cyclical features for each time slot
     minutes_of_day = [dt.hour * 60 + dt.minute for dt in time_slots]
+    day_of_year = [dt.timetuple().tm_yday for dt in time_slots]
+    sin_day = [np.sin((m / 1440) * 2 * 3.141592653589793) for m in minutes_of_day]
+    cos_day = [np.cos((m / 1440) * 2 * 3.141592653589793) for m in minutes_of_day]
+    sin_year = [np.sin((d / 365) * 2 * 3.141592653589793) for d in day_of_year]
+    cos_year = [np.cos((d / 365) * 2 * 3.141592653589793) for d in day_of_year]
 
     df = pd.DataFrame(
         {
-            "minutes_of_day": minutes_of_day,
-            "week": [dt.isocalendar()[1] for dt in time_slots],
+            "sin_day": sin_day,
+            "cos_day": cos_day,
+            "sin_year": sin_year,
+            "cos_year": cos_year,
         }
     )
 

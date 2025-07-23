@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import joblib
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
@@ -11,19 +12,34 @@ from sklearn.model_selection import train_test_split
 def main() -> None:
     print("This is the main check for analyze.py")
 
-    production_data = pd.read_csv("PV-power.csv", parse_dates=["time"], sep=",")
+    production_data = pd.read_csv("pv.23.07.csv", parse_dates=["time"], sep=",")
 
     # Remove rows where null
     production_data = production_data.dropna(subset=["time"])
     production_data = production_data.dropna(subset=["value"])
 
-    production_data["minutes_of_day"] = (
+    # Cyclical features for time of day
+    minutes_of_day = (
         production_data["time"].dt.hour * 60 + production_data["time"].dt.minute
     )
-    production_data["week"] = production_data["time"].dt.isocalendar().week
+    production_data["sin_day"] = (minutes_of_day / 1440 * 2 * 3.141592653589793).apply(
+        lambda x: np.sin(x)
+    )
+    production_data["cos_day"] = (minutes_of_day / 1440 * 2 * 3.141592653589793).apply(
+        lambda x: np.cos(x)
+    )
+
+    # Cyclical features for time of year
+    day_of_year = production_data["time"].dt.dayofyear
+    production_data["sin_year"] = (day_of_year / 365 * 2 * 3.141592653589793).apply(
+        lambda x: np.sin(x)
+    )
+    production_data["cos_year"] = (day_of_year / 365 * 2 * 3.141592653589793).apply(
+        lambda x: np.cos(x)
+    )
 
     # Define features and target
-    X = production_data[["minutes_of_day", "week"]]
+    X = production_data[["sin_day", "cos_day", "sin_year", "cos_year"]]
     y = production_data["value"]
 
     # Split the data into training and test sets
