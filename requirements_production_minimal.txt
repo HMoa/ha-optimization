@@ -15,3 +15,6 @@ influxdb==5.3.1
 
 # Linear optimization solver
 ortools==9.14.6206
+
+# Plotting
+matplotlib==3.10.3

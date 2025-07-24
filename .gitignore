@@ -1,5 +1,6 @@
 **/.DS_Store
 schedule.json
+schedule.png
 influxdb_config.json
 
 analytics/*.csv
