@@ -1,0 +1,54 @@
+---
+globs: optimizer/solver.py
+alwaysApply: false
+---
+# Battery Optimization Domain Knowledge
+
+## Core Economic Logic
+- Primary objective: Minimize electricity cost while maximizing grid export revenue
+- Arbitrage strategy: Buy low, sell high - store energy when prices are low, discharge when prices are high
+- Swedish market has asymmetric pricing: Buy price = spot + 0.4 + 0.55, Sell price = spot + 0.08 + 0.6
+- Net difference: Buy price is ~0.27 kr/kWh higher than sell price
+- Battery efficiency: 95% charging efficiency (eta_c = 0.95) must be considered
+
+## Battery Management
+- Target SOC: 30% (comfortable buffer)
+- Minimum SOC: 7% (absolute limit)
+- Soft constraint: Use penalties (0.1 kr/kWh per Wh below 30%) rather than hard limits
+- Cannot charge and discharge simultaneously
+- SOC evolution: charging increases by (charge_wh * 0.95), discharging decreases by discharge_wh
+
+## Optimization Structure
+- Variables: grid_import, grid_export, battery_charge, battery_discharge, battery_energy, soc_deficit
+- Constraints: energy_balance, battery_state, mutual_exclusion, soc_penalty
+- Objective: minimize (grid_import_cost - grid_export_revenue + charging_penalty + soc_penalty)
+- Energy balance: production + grid_import + battery_discharge = consumption + battery_charge + grid_export
+
+## Activity Classification
+- CHARGE_SOLAR_SURPLUS: Using excess solar to charge
+- CHARGE: Charging from grid (low prices)
+- DISCHARGE_FOR_HOME: Meeting home consumption needs
+- DISCHARGE: Selling excess to grid (high prices)
+- CHARGE_LIMIT/DISCHARGE_LIMIT: Constrained operations
+
+
+## Implementation Patterns
+- Separate setup methods: _setup_variables(), _setup_constraints(), _setup_objective()
+- Use internal methods (underscore prefix) for implementation details
+- Strict typing with proper annotations
+- Linear optimization with GLOP solver for speed
+- Allow small numerical tolerance in tests (floating point precision)
+
+## Key Intricacies
+- Even "low" spot prices result in buy > sell price due to asymmetric fees
+- Optimizer may discharge to sell rather than charge when no price differential exists
+- SOC penalty creates economic trade-off between safety buffer and profit maximization
+- Price differentials drive arbitrage decisions, not simple surplus/deficit scenarios
+- Grid flow: positive = import (buying), negative = export (selling)
+
+## Testing Strategy
+- Test economic scenarios (price differentials, arbitrage)
+- Test constraint satisfaction (energy balance, SOC limits)
+- Test edge cases (empty inputs, extreme prices)
+- Allow numerical tolerance for floating point comparisons
+- Validate solver status and solution feasibility
