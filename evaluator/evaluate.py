@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
@@ -76,15 +77,17 @@ def fetch_minutely_power(
         return pd.DataFrame(data)
 
 
-def main() -> None:
-    # Get yesterday's date range
-    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    yesterday = today - timedelta(days=1)
-    start = yesterday
-    end = today
+def main(evaluation_date: Optional[datetime] = None) -> None:
+    # Get the date to evaluate (default to yesterday if not specified)
+    if evaluation_date is None:
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        evaluation_date = today - timedelta(days=1)
 
-    # Fetch hourly prices for yesterday
-    prices: Dict[datetime, Elpris] = fetch_electricity_prices(yesterday)
+    start = evaluation_date
+    end = evaluation_date + timedelta(days=1)
+
+    # Fetch hourly prices for the evaluation date
+    prices: Dict[datetime, Elpris] = fetch_electricity_prices(evaluation_date)
     # Map prices to hour (truncate to hour)
     price_per_hour = {
         dt.replace(minute=0, second=0, microsecond=0): price
@@ -144,20 +147,20 @@ def main() -> None:
     total_no_battery_cost = consumed_hourly["cost"].sum() - pv_hourly["revenue"].sum()
 
     print(
-        f"\nUsage cost (no batteries) for {yesterday.date()}: {total_no_battery_cost:.2f} SEK"
+        f"\nUsage cost (no batteries) for {evaluation_date.date()}: {total_no_battery_cost:.2f} SEK"
     )
     print(
-        f"Actual cost (with batteries) for {yesterday.date()}: {actual_total_cost:.2f} SEK"
+        f"Actual cost (with batteries) for {evaluation_date.date()}: {actual_total_cost:.2f} SEK"
     )
     print(
-        f"Savings for {yesterday.date()}: {total_no_battery_cost - actual_total_cost:.2f} SEK\n"
+        f"Savings for {evaluation_date.date()}: {total_no_battery_cost - actual_total_cost:.2f} SEK\n"
     )
 
     # Save results to InfluxDB
     config = InfluxDBConfig()
     with InfluxDBClientWrapper(config) as client:
         # Use midnight UTC for the calculated day as timestamp
-        result_timestamp = yesterday.replace(tzinfo=None).isoformat() + "Z"
+        result_timestamp = evaluation_date.replace(tzinfo=None).isoformat() + "Z"
         client.write_point(
             measurement="evaluation",
             fields={
@@ -171,4 +174,26 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Evaluate energy consumption and production."
+    )
+    parser.add_argument(
+        "--date",
+        type=str,
+        help="Date to evaluate in YYYY-MM-DD format (default: yesterday).",
+    )
+    args = parser.parse_args()
+
+    evaluation_date = None
+    if args.date:
+        try:
+            evaluation_date = datetime.strptime(args.date, "%Y-%m-%d").replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+        except ValueError:
+            print(
+                f"Error: Invalid date format. Please use YYYY-MM-DD. Example: --date 2023-10-27"
+            )
+            sys.exit(1)
+
+    main(evaluation_date)
