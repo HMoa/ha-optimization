@@ -262,13 +262,6 @@ def get_initial_consumption_values(
             return []
 
         values = client.get_consumption_data()
-        if values:
-            print(
-                f"Successfully fetched {len(values)} consumption values from InfluxDB"
-            )
-            print(f"Values: {values}")
-        else:
-            print("No consumption data found in InfluxDB")
 
         return values
 

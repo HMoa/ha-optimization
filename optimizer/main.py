@@ -7,14 +7,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 
 from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow
-from optimizer.consumption_provider import get_consumption
-from optimizer.influxdb_client import get_initial_consumption_values
-from optimizer.plotting import save_schedule_plot, show_schedule_plot
-from optimizer.production_provider import get_production
+from optimizer.plotting import show_schedule_plot
 
 
 def plot_outcome(battery_percent: float) -> int:
@@ -163,21 +159,6 @@ def main() -> None:
         sys.exit(plot_outcome(args.battery_percent))
     else:
         print("Generating schedule")
-
-        # Handle InfluxDB integration
-        if args.use_influxdb:
-            print("Fetching initial consumption values from InfluxDB...")
-            try:
-                influx_values = get_initial_consumption_values(args.influxdb_config)
-                if influx_values:
-                    print(f"Using {len(influx_values)} values from InfluxDB")
-                else:
-                    print(
-                        "Warning: No data from InfluxDB, falling back to other methods"
-                    )
-            except Exception as e:
-                print(f"Error fetching from InfluxDB: {e}")
-                print("Falling back to other methods")
 
         generate_schedule(
             args.battery_percent,

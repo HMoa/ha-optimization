@@ -3,14 +3,11 @@ from __future__ import annotations
 import os
 import pickle
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 from optimizer.battery_config import BatteryConfig
-from optimizer.consumption_provider import (
-    get_consumption_iterative,
-    get_consumption_with_initial_values,
-)
+from optimizer.consumption_provider import get_consumption_with_initial_values
 from optimizer.elpris_api import fetch_electricity_prices
+from optimizer.influxdb_client import get_initial_consumption_values
 from optimizer.models import Activity, Elpris, TimeslotItem
 from optimizer.production_provider import get_production
 from optimizer.solver import Solver
@@ -30,11 +27,6 @@ class BatteryOptimizerWorkflow:
 
     def generate_schedule(
         self,
-        initial_lag_1: Optional[float] = None,
-        initial_lag_2: Optional[float] = None,
-        initial_rolling_mean: Optional[float] = None,
-        initial_rolling_std: Optional[float] = None,
-        initial_consumption_values: Optional[List[float]] = None,
     ) -> None:
         start_date = self.get_current_timeslot()
         prices = fetch_electricity_prices(start_date)
@@ -60,49 +52,18 @@ class BatteryOptimizerWorkflow:
         # extend with mean price to artificially extent the horizon to optimize for.
         # We might find a better way to disincentivize selling off all the energy at the end of the day.
         if len(prices) < (24 - 17):
-            print(
-                f"Only {len(prices)} prices available, extending with mean price for next 24 hours."
-            )
             self._extend_prices_with_mean(prices)
 
         end_date = max(prices.keys())
-        print(f"Dates: {start_date} - {end_date}")
 
-        # Use the appropriate consumption method based on provided parameters
-        if initial_consumption_values is not None:
-            print(
-                f"Using consumption prediction with {len(initial_consumption_values)} initial values"
-            )
-            consumption = get_consumption_with_initial_values(
-                start_date, end_date, initial_consumption_values
-            )
-        elif any(
-            param is not None
-            for param in [
-                initial_lag_1,
-                initial_lag_2,
-                initial_rolling_mean,
-                initial_rolling_std,
-            ]
-        ):
-            print("Using iterative consumption prediction with custom initial values")
-            consumption = get_consumption_iterative(
-                start_date,
-                end_date,
-                initial_lag_1=initial_lag_1,
-                initial_lag_2=initial_lag_2,
-                initial_rolling_mean=initial_rolling_mean,
-                initial_rolling_std=initial_rolling_std,
-            )
-        else:
-            print("Using default consumption prediction")
-            from optimizer.consumption_provider import get_consumption
+        influx_values = get_initial_consumption_values()
 
-            consumption = get_consumption(start_date, end_date)
-
+        print("Creating predictions")
+        consumption = get_consumption_with_initial_values(
+            start_date, end_date, influx_values
+        )
         production = get_production(start_date, end_date)
-
-        print(f"Production slots: {len(production)} - {len(consumption)}")
+        print("Done creating predictions")
 
         schedule = self.solver.create_schedule(
             production, consumption, prices, self.config
@@ -171,10 +132,6 @@ class BatteryOptimizerWorkflow:
         # Create a 24-hour schedule with self-consumption only
         end_date = start_date + timedelta(hours=24)
 
-        # Get consumption and production data
-        consumption = get_consumption_iterative(start_date, end_date)
-        production = get_production(start_date, end_date)
-
         # Create a simple self-consumption schedule
         schedule: dict[datetime, TimeslotItem] = {}
         current_energy = self.config.initial_energy
@@ -182,10 +139,6 @@ class BatteryOptimizerWorkflow:
         # Iterate through 5-minute time slots
         current_time = start_date
         while current_time < end_date:
-            # Get consumption and production for this time slot
-            net_consumption = consumption.get(current_time, 0.0)
-            net_production = production.get(current_time, 0.0)
-
             # Create timeslot item
             schedule[current_time] = TimeslotItem(
                 start_time=current_time,
@@ -196,9 +149,9 @@ class BatteryOptimizerWorkflow:
                     current_energy / self.config.storage_size_wh
                 )
                 * 100,
-                house_consumption_wh=net_consumption,
+                house_consumption_wh=0,
                 activity=Activity.SELF_CONSUMPTION,
-                grid_flow_wh=net_production - net_consumption,
+                grid_flow_wh=0,
                 amount=0,
             )
 
