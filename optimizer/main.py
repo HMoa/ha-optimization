@@ -17,7 +17,8 @@ def plot_outcome(battery_percent: float) -> int:
     from optimizer.battery_optimizer_workflow import BatteryOptimizerWorkflow
 
     workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
-    schedule = workflow.generate_schedule_from_file()
+    workflow.generate_schedule()
+    schedule = workflow.schedule
     if schedule is None:
         print("No schedule available to plot")
         return 1
@@ -54,23 +55,6 @@ def generate_schedule(
     # Save to file
     with open("schedule.json", "w") as f:
         json.dump(schedule_json, f, indent=2)
-
-    if save:
-        import os
-        import pickle
-
-        # Save params for later use
-        params = [
-            workflow.production,
-            workflow.consumption,
-            workflow.prices,
-            workflow.config,
-        ]
-        sample_data_dir = os.path.join(os.path.dirname(__file__), "../sample_data")
-        os.makedirs(sample_data_dir, exist_ok=True)
-        sample_data_path = os.path.join(sample_data_dir, "optimizer_params.pkl")
-        with open(sample_data_path, "wb") as f:
-            pickle.dump(params, f)
 
     if save_image:
         from optimizer.plotting import save_schedule_plot

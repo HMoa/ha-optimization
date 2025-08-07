@@ -45,6 +45,8 @@ class TimeslotItem:
             self.amount = round(self.amount, 2)
 
     def amount_percent(self) -> int:  # Percent in minor units
+        if self.amount is None:
+            return 0
         return int(abs(self.amount / self.real_battery_flow_w) * 10000)
 
 

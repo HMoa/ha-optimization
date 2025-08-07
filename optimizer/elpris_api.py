@@ -7,9 +7,10 @@ import requests
 from optimizer.models import Elpris
 
 
-def fetch_electricity_prices(start_date: datetime) -> dict[datetime, Elpris]:
+def fetch_electricity_prices(
+    start_date: datetime, grid_area: str
+) -> dict[datetime, Elpris]:
     base_url = "https://www.elprisetjustnu.se/api/v1/prices"
-    grid_area = "SE3"
     today = start_date.date()
 
     tomorrow = today + timedelta(days=1)
@@ -48,6 +49,6 @@ def fetch_electricity_prices(start_date: datetime) -> dict[datetime, Elpris]:
 
 
 if __name__ == "__main__":
-    prices = fetch_electricity_prices(datetime.now())
+    prices = fetch_electricity_prices(datetime.now(), "SE3")
     for time, price in sorted(prices.items()):
         print(f"{time}: {price} SEK/kWh")

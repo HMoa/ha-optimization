@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 from influxdb import InfluxDBClient
@@ -16,7 +16,7 @@ class InfluxDBConfig:
         self.config_path = config_path
         self.config = self._load_config()
 
-    def _load_config(self) -> dict:
+    def _load_config(self) -> dict[str, Any]:
         """Load configuration from JSON file"""
         if not os.path.exists(self.config_path):
             raise FileNotFoundError(
@@ -32,43 +32,43 @@ class InfluxDBConfig:
             if field not in config:
                 raise ValueError(f"Missing required config field: {field}")
 
-        return config
+        return dict(config)
 
     @property
     def url(self) -> str:
-        return self.config["url"]
+        return str(self.config["url"])
 
     @property
     def username(self) -> str:
-        return self.config["username"]
+        return str(self.config["username"])
 
     @property
     def password(self) -> str:
-        return self.config["password"]
+        return str(self.config["password"])
 
     @property
     def database(self) -> str:
-        return self.config["database"]
+        return str(self.config["database"])
 
     @property
     def measurement(self) -> str:
-        return self.config["measurement"]
+        return str(self.config["measurement"])
 
     @property
     def field(self) -> str:
-        return self.config.get("field", "value")
+        return str(self.config.get("field", "value"))
 
     @property
     def time_window_minutes(self) -> int:
-        return self.config.get("time_window_minutes", 30)
+        return int(self.config.get("time_window_minutes", 30))
 
     @property
     def aggregation_window_minutes(self) -> int:
-        return self.config.get("aggregation_window_minutes", 5)
+        return int(self.config.get("aggregation_window_minutes", 5))
 
     @property
     def data_points(self) -> int:
-        return self.config.get("data_points", 6)
+        return int(self.config.get("data_points", 6))
 
 
 class InfluxDBClientWrapper:
@@ -89,13 +89,13 @@ class InfluxDBClientWrapper:
             database=config.database,
         )
 
-    def __enter__(self):
+    def __enter__(self) -> InfluxDBClientWrapper:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """Close the InfluxDB client connection"""
         if hasattr(self, "client"):
             self.client.close()
@@ -221,7 +221,11 @@ class InfluxDBClientWrapper:
             return False
 
     def write_point(
-        self, measurement: str, fields: dict, tags: dict = None, timestamp: str = None
+        self,
+        measurement: str,
+        fields: dict[str, Any],
+        tags: dict[str, Any] | None = None,
+        timestamp: str | None = None,
     ) -> None:
         """
         Write a single point to InfluxDB.
@@ -263,7 +267,7 @@ def get_initial_consumption_values(
 
         values = client.get_consumption_data()
 
-        return values
+        return list(values)
 
 
 if __name__ == "__main__":

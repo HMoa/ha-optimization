@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+import os
+from typing import Any
+
 
 class BatteryConfig:
     def __init__(
@@ -33,10 +37,29 @@ class BatteryConfig:
 
     @staticmethod
     def default_config() -> BatteryConfig:
-        return BatteryConfig(
-            grid_area="SE3",
-            storage_size_wh=44000,
-            initial_energy=1000.0,
-            max_charge_speed_w=8000,
-            max_discharge_speed_w=9000,
+        """Load configuration from the config file."""
+        config_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "config", "battery_config.json"
         )
+
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config_data: dict[str, Any] = json.load(f)
+
+            return BatteryConfig(
+                grid_area=config_data["grid_area"],
+                storage_size_wh=config_data["storage_size_wh"],
+                initial_energy=config_data["initial_energy"],
+                max_charge_speed_w=config_data["max_charge_speed_w"],
+                max_discharge_speed_w=config_data["max_discharge_speed_w"],
+            )
+        except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not load battery config from {config_path}: {e}")
+            print("Using fallback default values")
+            return BatteryConfig(
+                grid_area="SE3",
+                storage_size_wh=44000,
+                initial_energy=1000.0,
+                max_charge_speed_w=8000,
+                max_discharge_speed_w=9000,
+            )

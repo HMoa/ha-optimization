@@ -102,6 +102,7 @@ class TestSolver(unittest.TestCase):
         )
 
         self.assertIsNotNone(result)
+        assert result is not None  # For mypy
         self.assertEqual(len(result), 2)
 
         # With asymmetric pricing, even "low" prices result in buy > sell price
@@ -140,6 +141,7 @@ class TestSolver(unittest.TestCase):
         )
 
         self.assertIsNotNone(result)
+        assert result is not None  # For mypy
         self.assertEqual(len(result), 2)
 
         # Should discharge battery to sell to grid when prices are very high
@@ -180,6 +182,7 @@ class TestSolver(unittest.TestCase):
         )
 
         self.assertIsNotNone(result)
+        assert result is not None  # For mypy
         self.assertEqual(len(result), 3)
 
         # Check that battery SOC evolves logically
@@ -220,6 +223,7 @@ class TestSolver(unittest.TestCase):
         )
 
         self.assertIsNotNone(result)
+        assert result is not None  # For mypy
         timeslot = result[base_time]
 
         # Energy balance: production + grid_import + battery_discharge = consumption + battery_charge + grid_export
@@ -263,6 +267,7 @@ class TestSolver(unittest.TestCase):
         )
 
         self.assertIsNotNone(result)
+        assert result is not None  # For mypy
         self.assertEqual(len(result), 3)
 
         timeslots = sorted(result.keys())

@@ -123,13 +123,13 @@ def get_consumption_with_initial_values(
             # Use time-based fallback
             hour = current_time.hour
             if 6 <= hour <= 8:
-                prediction = 800
+                prediction = 800.0
             elif 17 <= hour <= 21:
-                prediction = 1200
+                prediction = 1200.0
             elif 22 <= hour or hour <= 5:
-                prediction = 300
+                prediction = 300.0
             else:
-                prediction = 600
+                prediction = 600.0
         else:
             # Make prediction
             prediction = model.predict(current_features)[0]
@@ -160,7 +160,14 @@ if __name__ == "__main__":
     try:
         print("\n1. Method with provided initial consumption values:")
         # Provide 6 periods of history (most recent last)
-        initial_values = [600, 650, 700, 750, 800, 750]  # 30 minutes of history
+        initial_values = [
+            600.0,
+            650.0,
+            700.0,
+            750.0,
+            800.0,
+            750.0,
+        ]  # 30 minutes of history
         initial_response = get_consumption_with_initial_values(
             start_time, end_time, initial_values
         )
