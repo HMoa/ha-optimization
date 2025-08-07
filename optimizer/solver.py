@@ -160,6 +160,16 @@ class Solver:
             objective.SetCoefficient(
                 variables["soc_deficit_wh"][i], soc_penalty_coefficient
             )  # Penalty for low SOC
+
+        # Add neutral final SOC value to prevent end-of-horizon sell-off
+        final_key = list(production_w.keys())[-1]
+        final_sell_price = prices[
+            get_closest_price_timeslot(final_key)
+        ].get_sell_price()
+        objective.SetCoefficient(
+            variables["battery_energy_wh"][final_key], -final_sell_price
+        )
+
         objective.SetMinimization()
 
     def _create_schedule(
