@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -83,24 +83,50 @@ def main(evaluation_date: Optional[datetime] = None) -> None:
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         evaluation_date = today - timedelta(days=1)
 
-    start = evaluation_date
-    end = evaluation_date + timedelta(days=1)
+    # Convert local date range to UTC for InfluxDB queries
+    local_start = evaluation_date
+    local_end = evaluation_date + timedelta(days=1)
+
+    # Convert to UTC using proper timezone conversion
+    # First, assume the local time is in Swedish timezone (Europe/Stockholm)
+    utc_start = (
+        pd.Timestamp(local_start)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
+    utc_end = (
+        pd.Timestamp(local_end)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
 
     # Fetch hourly prices for the evaluation date
-    prices: Dict[datetime, Elpris] = fetch_electricity_prices(evaluation_date)
-    # Map prices to hour (truncate to hour)
+    prices: Dict[datetime, Elpris] = fetch_electricity_prices(evaluation_date, "SE3")
+    # Map prices to hour (truncate to hour and convert to timezone-naive)
     price_per_hour = {
-        dt.replace(minute=0, second=0, microsecond=0): price
+        dt.replace(minute=0, second=0, microsecond=0).replace(tzinfo=None): price
         for dt, price in prices.items()
     }
 
-    # Fetch hourly consumption and production diffs
-    consumed_df = fetch_hourly_diffs("energy.consumed", "value", start, end)
-    produced_df = fetch_hourly_diffs("energy.produced", "value", start, end)
+    # Fetch hourly consumption and production diffs (using UTC range)
+    consumed_df = fetch_hourly_diffs("energy.consumed", "value", utc_start, utc_end)
+    produced_df = fetch_hourly_diffs("energy.produced", "value", utc_start, utc_end)
 
-    # Convert timestamps to datetime and align to hour
-    consumed_df["hour"] = pd.to_datetime(consumed_df["timestamp"]).dt.floor("h")
-    produced_df["hour"] = pd.to_datetime(produced_df["timestamp"]).dt.floor("h")
+    # Convert timestamps to datetime and align to hour (convert UTC to local time)
+    consumed_df["hour"] = (
+        pd.to_datetime(consumed_df["timestamp"])
+        .dt.tz_convert("Europe/Stockholm")
+        .dt.tz_localize(None)
+        .dt.floor("h")
+    )
+    produced_df["hour"] = (
+        pd.to_datetime(produced_df["timestamp"])
+        .dt.tz_convert("Europe/Stockholm")
+        .dt.tz_localize(None)
+        .dt.floor("h")
+    )
 
     # Merge with prices and calculate cost/revenue
     consumed_df["price"] = consumed_df["hour"].map(
@@ -117,14 +143,24 @@ def main(evaluation_date: Optional[datetime] = None) -> None:
     actual_total_cost = consumed_df["cost"].sum() - produced_df["revenue"].sum()
 
     # --- Calculate cost without batteries (using power.pv and power.consumed in W) ---
-    consumed_power_df = fetch_minutely_power("power.consumed", "value", start, end)
-    pv_power_df = fetch_minutely_power("power.pv", "value", start, end)
-
-    # Convert timestamps to datetime and align to hour
-    consumed_power_df["hour"] = pd.to_datetime(consumed_power_df["timestamp"]).dt.floor(
-        "h"
+    consumed_power_df = fetch_minutely_power(
+        "power.consumed", "value", utc_start, utc_end
     )
-    pv_power_df["hour"] = pd.to_datetime(pv_power_df["timestamp"]).dt.floor("h")
+    pv_power_df = fetch_minutely_power("power.pv", "value", utc_start, utc_end)
+
+    # Convert timestamps to datetime and align to hour (convert UTC to local time)
+    consumed_power_df["hour"] = (
+        pd.to_datetime(consumed_power_df["timestamp"])
+        .dt.tz_convert("Europe/Stockholm")
+        .dt.tz_localize(None)
+        .dt.floor("h")
+    )
+    pv_power_df["hour"] = (
+        pd.to_datetime(pv_power_df["timestamp"])
+        .dt.tz_convert("Europe/Stockholm")
+        .dt.tz_localize(None)
+        .dt.floor("h")
+    )
 
     # Convert W to Wh per minute, then sum by hour
     consumed_power_df["wh"] = consumed_power_df["value"] / 60.0
