@@ -54,7 +54,7 @@ class BatteryOptimizerWorkflow:
         if len(prices) < (24 - 17):
             self._extend_prices_with_mean(prices)
 
-        end_date = max(prices.keys()) + timedelta(hours=1)
+        end_date = max(prices.keys()) + timedelta(hours=1) - timedelta(minutes=5)
 
         influx_values = get_initial_consumption_values()
 

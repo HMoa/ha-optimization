@@ -161,6 +161,10 @@ class Solver:
                 variables["soc_deficit_wh"][i], soc_penalty_coefficient
             )  # Penalty for low SOC
 
+            objective.SetCoefficient(
+                variables["battery_energy_wh"][i], -0.001
+            )  # Miniscule soc bonus, to favour leaving discharge to end of period instead of randomly in the middle
+
         # Add neutral final SOC value to prevent end-of-horizon sell-off
         final_key = list(production_w.keys())[-1]
         final_sell_price = prices[
