@@ -12,11 +12,11 @@ def show_schedule_plot(schedule: Dict[datetime, TimeslotItem]) -> None:
     fig, ax1 = plt.subplots(figsize=(12, 8))
     activity_colors = {
         "charge": "#40EE60",
-        "charge_solar_surplus": "#FFFF00",
+        "charge_solar_surplus": "#c6ff63",
         "charge_limit": "#00FFFF",
         "discharge": "#FF2621",
-        "discharge_for_home": "#AAA500",
-        "discharge_limit": "#FF8681",
+        "discharge_for_home": "#fca649",
+        "discharge_limit": "#a18102",
         "self_consumption": "#A6A6AA",
         "idle": "#000000",
     }

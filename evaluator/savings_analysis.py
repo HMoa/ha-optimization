@@ -79,6 +79,240 @@ def fetch_minutely_power(
         return pd.DataFrame(data)
 
 
+def _get_evaluation_date(evaluation_date: Optional[datetime]) -> datetime:
+    """Get the evaluation date, defaulting to yesterday if not specified."""
+    if evaluation_date is None:
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        return today - timedelta(days=1)
+    return evaluation_date
+
+
+def _convert_local_to_utc_range(local_date: datetime) -> tuple[datetime, datetime]:
+    """Convert local date range to UTC for InfluxDB queries."""
+    local_start = local_date
+    local_end = local_date + timedelta(days=1)
+
+    # Convert to UTC using proper timezone conversion
+    utc_start = (
+        pd.Timestamp(local_start)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
+    utc_end = (
+        pd.Timestamp(local_end)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
+
+    return utc_start.to_pydatetime(), utc_end.to_pydatetime()
+
+
+def _fetch_and_map_prices(
+    evaluation_date: datetime,
+) -> tuple[dict[datetime, object], dict[datetime, object]]:
+    """Fetch electricity prices and map them to timezone-naive hours.
+
+    Returns:
+        tuple: (original_prices, price_per_hour_mapped)
+            - original_prices: timezone-aware prices as fetched from API
+            - price_per_hour_mapped: timezone-naive prices mapped to hour keys
+    """
+    prices = fetch_electricity_prices(evaluation_date, "SE3")
+    # Map prices to hour (truncate to hour and convert to timezone-naive)
+    price_per_hour = {
+        dt.replace(minute=0, second=0, microsecond=0).replace(tzinfo=None): price
+        for dt, price in prices.items()
+    }
+    return prices, price_per_hour
+
+
+def _add_hour_column_to_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Add hour column to DataFrame, converting UTC timestamps to local time."""
+    if len(df) > 0:
+        df["hour"] = (
+            pd.to_datetime(df["timestamp"])
+            .dt.tz_convert("Europe/Stockholm")
+            .dt.tz_localize(None)
+            .dt.floor("h")
+        )
+    else:
+        df["hour"] = pd.Series([], dtype="datetime64[ns]")
+    return df
+
+
+def _add_5min_column_to_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Add 5-minute interval column to DataFrame, converting UTC timestamps to local time."""
+    if len(df) > 0:
+        df["interval_5min"] = (
+            pd.to_datetime(df["timestamp"])
+            .dt.tz_convert("Europe/Stockholm")
+            .dt.tz_localize(None)
+            .dt.floor("5min")
+        )
+    else:
+        df["interval_5min"] = pd.Series([], dtype="datetime64[ns]")
+    return df
+
+
+def _fetch_energy_data(
+    utc_start: datetime, utc_end: datetime
+) -> tuple[
+    pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+]:
+    """Fetch all energy data from InfluxDB."""
+    # Fetch hourly consumption and production diffs (using UTC range)
+    consumed_df = fetch_hourly_diffs("energy.consumed", "value", utc_start, utc_end)
+    produced_df = fetch_hourly_diffs("energy.produced", "value", utc_start, utc_end)
+
+    # Fetch minutely power data (for no-battery scenario)
+    consumed_power_df = fetch_minutely_power(
+        "power.consumed", "value", utc_start, utc_end
+    )
+    pv_power_df = fetch_minutely_power("power.pv", "value", utc_start, utc_end)
+
+    # Fetch battery SoC data
+    battery_soc_df = fetch_minutely_power("energy.SoC", "value", utc_start, utc_end)
+
+    # Fetch inverter mode data
+    inverter_mode_df = fetch_minutely_power(
+        "schedule.mode", "value", utc_start, utc_end
+    )
+
+    return (
+        consumed_df,
+        produced_df,
+        consumed_power_df,
+        pv_power_df,
+        battery_soc_df,
+        inverter_mode_df,
+    )
+
+
+def _process_battery_scenario_data(
+    consumed_df: pd.DataFrame,
+    produced_df: pd.DataFrame,
+    price_per_hour: dict[datetime, object],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Process data for battery-optimized scenario."""
+    # Convert timestamps to datetime and align to hour
+    consumed_df = _add_hour_column_to_dataframe(consumed_df)
+    produced_df = _add_hour_column_to_dataframe(produced_df)
+
+    # Merge with prices and calculate cost/revenue
+    if len(consumed_df) > 0:
+        consumed_df["price"] = consumed_df["hour"].map(
+            lambda h: price_per_hour[h].get_buy_price() if h in price_per_hour else None
+        )
+        consumed_df["cost"] = consumed_df["diff"] * (consumed_df["price"] / 1000)
+    else:
+        consumed_df["price"] = pd.Series([], dtype="float64")
+        consumed_df["cost"] = pd.Series([], dtype="float64")
+
+    if len(produced_df) > 0:
+        produced_df["price"] = produced_df["hour"].map(
+            lambda h: (
+                price_per_hour[h].get_sell_price() if h in price_per_hour else None
+            )
+        )
+        produced_df["revenue"] = produced_df["diff"] * (produced_df["price"] / 1000)
+    else:
+        produced_df["price"] = pd.Series([], dtype="float64")
+        produced_df["revenue"] = pd.Series([], dtype="float64")
+
+    return consumed_df, produced_df
+
+
+def _process_no_battery_scenario_data(
+    consumed_power_df: pd.DataFrame,
+    pv_power_df: pd.DataFrame,
+    price_per_hour: dict[datetime, object],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Process data for no-battery scenario."""
+    # Convert timestamps to datetime and align to hour
+    consumed_power_df = _add_hour_column_to_dataframe(consumed_power_df)
+    pv_power_df = _add_hour_column_to_dataframe(pv_power_df)
+
+    # Convert W to Wh per minute, then sum by hour
+    if len(consumed_power_df) > 0:
+        consumed_power_df["wh"] = consumed_power_df["value"] / 60.0
+        consumed_hourly = consumed_power_df.groupby("hour")["wh"].sum().reset_index()
+        # Map prices to hour
+        consumed_hourly["price"] = consumed_hourly["hour"].map(
+            lambda h: price_per_hour[h].get_buy_price() if h in price_per_hour else None
+        )
+        # Calculate cost (convert Wh to kWh by dividing price by 1000)
+        consumed_hourly["cost"] = consumed_hourly["wh"] * (
+            consumed_hourly["price"] / 1000
+        )
+    else:
+        consumed_hourly = pd.DataFrame(columns=["hour", "wh", "price", "cost"])
+
+    if len(pv_power_df) > 0:
+        pv_power_df["wh"] = pv_power_df["value"] / 60.0
+        pv_hourly = pv_power_df.groupby("hour")["wh"].sum().reset_index()
+        # Map prices to hour
+        pv_hourly["price"] = pv_hourly["hour"].map(
+            lambda h: (
+                price_per_hour[h].get_sell_price() if h in price_per_hour else None
+            )
+        )
+        # Calculate revenue (convert Wh to kWh by dividing price by 1000)
+        pv_hourly["revenue"] = pv_hourly["wh"] * (pv_hourly["price"] / 1000)
+    else:
+        pv_hourly = pd.DataFrame(columns=["hour", "wh", "price", "revenue"])
+
+    return consumed_hourly, pv_hourly
+
+
+def _process_battery_soc_data(battery_soc_df: pd.DataFrame) -> pd.DataFrame:
+    """Process battery State of Charge data."""
+    if len(battery_soc_df) > 0:
+        battery_soc_df = _add_hour_column_to_dataframe(battery_soc_df)
+        # Calculate average SoC per hour
+        battery_soc_hourly = (
+            battery_soc_df.groupby("hour")["value"].mean().reset_index()
+        )
+        battery_soc_hourly["soc_percent"] = battery_soc_hourly["value"]
+    else:
+        battery_soc_hourly = pd.DataFrame(columns=["hour", "value", "soc_percent"])
+
+    return battery_soc_hourly
+
+
+def _process_inverter_mode_data(inverter_mode_df: pd.DataFrame) -> pd.DataFrame:
+    """Process inverter mode data and map to activity names at 5-minute resolution."""
+    if len(inverter_mode_df) > 0:
+        inverter_mode_df = _add_5min_column_to_dataframe(inverter_mode_df)
+        # Calculate mode per 5-minute interval (use most frequent mode in the interval)
+        inverter_mode_5min = (
+            inverter_mode_df.groupby("interval_5min")["value"]
+            .agg(lambda x: x.mode()[0] if len(x.mode()) > 0 else x.iloc[0])
+            .reset_index()
+        )
+        # Map mode numbers to activity names
+        mode_to_activity = {
+            1: "charge",
+            2: "charge_solar_surplus",
+            3: "charge_limit",
+            4: "discharge_limit",
+            5: "discharge_for_home",
+            6: "discharge",
+        }
+        inverter_mode_5min["activity"] = inverter_mode_5min["value"].map(
+            mode_to_activity
+        )
+        # Rename column for consistency
+        inverter_mode_5min = inverter_mode_5min.rename(
+            columns={"interval_5min": "hour"}
+        )
+    else:
+        inverter_mode_5min = pd.DataFrame(columns=["hour", "value", "activity"])
+
+    return inverter_mode_5min
+
+
 def analyze_savings_patterns(
     evaluation_date: Optional[datetime] = None,
 ) -> pd.DataFrame:
@@ -86,115 +320,49 @@ def analyze_savings_patterns(
     Analyzes savings patterns by creating a comprehensive hourly breakdown of energy flows and costs.
     Returns a DataFrame with hourly data including purchased/sold energy, costs, and hypothetical scenarios.
     """
-    # Get the date to evaluate (default to yesterday if not specified)
-    if evaluation_date is None:
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        evaluation_date = today - timedelta(days=1)
+    # Get the evaluation date
+    evaluation_date = _get_evaluation_date(evaluation_date)
 
     # Convert local date range to UTC for InfluxDB queries
-    local_start = evaluation_date
-    local_end = evaluation_date + timedelta(days=1)
+    utc_start, utc_end = _convert_local_to_utc_range(evaluation_date)
 
-    # Convert to UTC (local time - 2 hours for CEST)
-    utc_start = local_start - timedelta(hours=2)
-    utc_end = local_end - timedelta(hours=2)
+    # Fetch and map electricity prices
+    original_prices, price_per_hour = _fetch_and_map_prices(evaluation_date)
 
-    print(f"Analyzing data for {evaluation_date.date()}")
-    print(f"Local time range: {local_start} to {local_end}")
-    print(f"UTC time range for InfluxDB: {utc_start} to {utc_end} (local time - 2h)")
+    # Fetch all energy data
+    (
+        consumed_df,
+        produced_df,
+        consumed_power_df,
+        pv_power_df,
+        battery_soc_df,
+        inverter_mode_df,
+    ) = _fetch_energy_data(utc_start, utc_end)
 
-    # Fetch hourly prices for the evaluation date
-    prices: Dict[datetime, Elpris] = fetch_electricity_prices(evaluation_date, "SE3")
-    print(f"Fetched {len(prices)} price points")
-    # Map prices to hour (truncate to hour and convert to timezone-naive)
-    price_per_hour = {
-        dt.replace(minute=0, second=0, microsecond=0).replace(tzinfo=None): price
-        for dt, price in prices.items()
-    }
-
-    # Fetch actual energy flows (with battery optimization) - using UTC range
-    consumed_df = fetch_hourly_diffs("energy.consumed", "value", utc_start, utc_end)
-    produced_df = fetch_hourly_diffs("energy.produced", "value", utc_start, utc_end)
-
-    # Fetch battery SoC data
-    battery_soc_df = fetch_minutely_power("energy.SoC", "value", utc_start, utc_end)
-
-    print(f"Fetched {len(consumed_df)} consumed data points")
-    print(f"Fetched {len(produced_df)} produced data points")
-    print(f"Fetched {len(battery_soc_df)} battery SoC data points")
-
-    # Convert timestamps to datetime and align to hour (convert UTC to local time)
-    if len(consumed_df) > 0:
-        consumed_df["hour"] = (
-            pd.to_datetime(consumed_df["timestamp"])
-            .dt.tz_convert("Europe/Stockholm")
-            .dt.tz_localize(None)
-            .dt.floor("h")
-        )
-    if len(produced_df) > 0:
-        produced_df["hour"] = (
-            pd.to_datetime(produced_df["timestamp"])
-            .dt.tz_convert("Europe/Stockholm")
-            .dt.tz_localize(None)
-            .dt.floor("h")
-        )
-
-    # Fetch raw power data (without battery optimization)
-    consumed_power_df = fetch_minutely_power(
-        "power.consumed", "value", utc_start, utc_end
+    # Process battery scenario data
+    consumed_df, produced_df = _process_battery_scenario_data(
+        consumed_df, produced_df, price_per_hour
     )
-    pv_power_df = fetch_minutely_power("power.pv", "value", utc_start, utc_end)
 
-    print(f"Fetched {len(consumed_power_df)} consumed power data points")
-    print(f"Fetched {len(pv_power_df)} PV power data points")
+    # Process no-battery scenario data
+    consumed_hourly, pv_hourly = _process_no_battery_scenario_data(
+        consumed_power_df, pv_power_df, price_per_hour
+    )
 
-    # Convert timestamps to datetime and align to hour (convert UTC to local time)
-    if len(consumed_power_df) > 0:
-        consumed_power_df["hour"] = (
-            pd.to_datetime(consumed_power_df["timestamp"])
-            .dt.tz_convert("Europe/Stockholm")
-            .dt.tz_localize(None)
-            .dt.floor("h")
-        )
-    if len(pv_power_df) > 0:
-        pv_power_df["hour"] = (
-            pd.to_datetime(pv_power_df["timestamp"])
-            .dt.tz_convert("Europe/Stockholm")
-            .dt.tz_localize(None)
-            .dt.floor("h")
-        )
+    # Process battery SoC data
+    battery_soc_hourly = _process_battery_soc_data(battery_soc_df)
 
-    # Convert W to Wh per minute, then sum by hour
-    if len(consumed_power_df) > 0:
-        consumed_power_df["wh"] = consumed_power_df["value"] / 60.0
-        consumed_hourly = consumed_power_df.groupby("hour")["wh"].sum().reset_index()
-    else:
-        consumed_hourly = pd.DataFrame(columns=["hour", "wh"])
-
-    if len(pv_power_df) > 0:
-        pv_power_df["wh"] = pv_power_df["value"] / 60.0
-        pv_hourly = pv_power_df.groupby("hour")["wh"].sum().reset_index()
-    else:
-        pv_hourly = pd.DataFrame(columns=["hour", "wh"])
-
-    # Process battery SoC data (convert UTC to local time)
-    if len(battery_soc_df) > 0:
-        battery_soc_df["hour"] = (
-            pd.to_datetime(battery_soc_df["timestamp"])
-            .dt.tz_convert("Europe/Stockholm")
-            .dt.tz_localize(None)
-            .dt.floor("h")
-        )
-        battery_soc_hourly = (
-            battery_soc_df.groupby("hour")["value"].mean().reset_index()
-        )
-    else:
-        battery_soc_hourly = pd.DataFrame(columns=["hour", "value"])
+    # Process inverter mode data
+    inverter_mode_5min = _process_inverter_mode_data(inverter_mode_df)
 
     # Create comprehensive analysis DataFrame
     analysis_data = []
 
-    for hour in pd.date_range(local_start, local_end - timedelta(hours=1), freq="h"):
+    for hour in pd.date_range(
+        evaluation_date,
+        evaluation_date + timedelta(days=1) - timedelta(hours=1),
+        freq="h",
+    ):
         hour_dt = hour.replace(tzinfo=None)
         # All data is now in local time, so we can use hour_dt directly
 
@@ -232,6 +400,13 @@ def analyze_savings_patterns(
             matching_soc = battery_soc_hourly[battery_soc_hourly["hour"] == hour_dt]
             if len(matching_soc) > 0:
                 battery_soc = matching_soc["value"].iloc[0]
+
+        # Get inverter mode
+        inverter_mode = "idle"
+        if len(inverter_mode_5min) > 0 and "hour" in inverter_mode_5min.columns:
+            matching_mode = inverter_mode_5min[inverter_mode_5min["hour"] == hour_dt]
+            if len(matching_mode) > 0:
+                inverter_mode = matching_mode["activity"].iloc[0]
 
         # Get prices (prices are already in local time)
         price = price_per_hour.get(hour_dt)
@@ -289,31 +464,33 @@ def analyze_savings_patterns(
                     0, actual_consumed - actual_produced
                 ),  # Positive when discharging
                 "battery_soc_percent": battery_soc,  # Battery state of charge
+                "inverter_mode": inverter_mode,  # Inverter working mode
             }
         )
 
     return pd.DataFrame(analysis_data)
 
 
-def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> None:
-    """
-    Creates comprehensive plots showing energy flows, costs, and savings patterns.
-    """
-    # Set up the plotting style
+def _setup_plot_style() -> None:
+    """Set up the plotting style and configuration."""
     plt.style.use("default")
     sns.set_palette("husl")
 
-    # Create a figure with multiple subplots
+
+def _create_figure_with_subplots(df: pd.DataFrame) -> tuple[plt.Figure, plt.Axes]:
+    """Create the main figure with subplots."""
     fig, axes = plt.subplots(2, 3, figsize=(20, 12))
     fig.suptitle(
         f'Savings Analysis - {df["hour"].iloc[0].date()}',
         fontsize=16,
         fontweight="bold",
     )
+    return fig, axes
 
-    # 1. Cost/Revenue breakdown
-    ax1 = axes[0, 0]
-    ax1.plot(
+
+def _plot_cost_revenue_breakdown(ax: plt.Axes, df: pd.DataFrame) -> None:
+    """Plot cost/revenue breakdown graph."""
+    ax.plot(
         df["hour"],
         df["actual_cost_sek"],
         label="Actual cost",
@@ -321,7 +498,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="red",
     )
-    ax1.plot(
+    ax.plot(
         df["hour"],
         df["actual_revenue_sek"],
         label="Actual revenue",
@@ -329,7 +506,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="green",
     )
-    ax1.plot(
+    ax.plot(
         df["hour"],
         df["hypothetical_cost_sek"],
         label="Hypothetical cost",
@@ -338,7 +515,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         alpha=0.7,
         color="darkred",
     )
-    ax1.plot(
+    ax.plot(
         df["hour"],
         df["hypothetical_revenue_sek"],
         label="Hypothetical revenue",
@@ -347,55 +524,15 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         alpha=0.7,
         color="darkgreen",
     )
-    ax1.set_title("Cost/Revenue Breakdown")
-    ax1.set_ylabel("SEK")
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
+    ax.set_title("Cost/Revenue Breakdown")
+    ax.set_ylabel("SEK")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
-    # 2. Cost comparison
-    ax2 = axes[0, 1]
-    ax2.plot(
-        df["hour"],
-        df["actual_cost_sek"],
-        label="Actual cost",
-        marker="o",
-        linewidth=2,
-        color="red",
-    )
-    ax2.plot(
-        df["hour"],
-        df["actual_revenue_sek"],
-        label="Actual revenue",
-        marker="s",
-        linewidth=2,
-        color="green",
-    )
-    ax2.plot(
-        df["hour"],
-        df["hypothetical_cost_sek"],
-        label="Hypothetical cost",
-        marker="^",
-        linestyle="--",
-        alpha=0.7,
-        color="darkred",
-    )
-    ax2.plot(
-        df["hour"],
-        df["hypothetical_revenue_sek"],
-        label="Hypothetical revenue",
-        marker="v",
-        linestyle="--",
-        alpha=0.7,
-        color="darkgreen",
-    )
-    ax2.set_title("Cost/Revenue Comparison")
-    ax2.set_ylabel("SEK")
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
 
-    # 2. Net cost comparison (clearer than savings)
-    ax2 = axes[0, 1]
-    ax2.plot(
+def _plot_net_cost_comparison(ax: plt.Axes, df: pd.DataFrame) -> None:
+    """Plot net cost comparison graph."""
+    ax.plot(
         df["hour"],
         df["actual_net_cost_sek"],
         label="With battery",
@@ -403,7 +540,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="blue",
     )
-    ax2.plot(
+    ax.plot(
         df["hour"],
         df["hypothetical_net_cost_sek"],
         label="Without battery",
@@ -411,7 +548,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="orange",
     )
-    ax2.fill_between(
+    ax.fill_between(
         df["hour"],
         df["actual_net_cost_sek"],
         df["hypothetical_net_cost_sek"],
@@ -419,31 +556,70 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         color="green",
         label="Savings area",
     )
-    ax2.set_title("Net Cost Comparison (Lower is Better)")
-    ax2.set_ylabel("SEK")
-    ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
+    ax.set_title("Net Cost Comparison (Lower is Better)")
+    ax.set_ylabel("SEK")
+    ax.axhline(y=0, color="black", linestyle="-", alpha=0.3)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
-    # 3. Battery State of Charge
-    ax3 = axes[0, 2]
-    ax3.plot(
+
+def _plot_battery_soc(
+    ax: plt.Axes, df: pd.DataFrame, inverter_mode_5min: pd.DataFrame
+) -> None:
+    """Plot battery State of Charge graph with inverter mode background at 5-minute resolution."""
+    # Define activity colors (matching plotting.py)
+    activity_colors = {
+        "charge": "#40EE60",
+        "charge_solar_surplus": "#c6ff63",
+        "charge_limit": "#00FFFF",
+        "discharge": "#FF2621",
+        "discharge_for_home": "#fca649",
+        "discharge_limit": "#a18102",
+        "self_consumption": "#A6A6AA",
+        "idle": "#000000",
+    }
+
+    # Add background colored spans for inverter modes at 5-minute resolution
+    if len(inverter_mode_5min) > 0 and "hour" in inverter_mode_5min.columns:
+        timestamps = list(inverter_mode_5min["hour"])
+        activities = list(inverter_mode_5min["activity"])
+        current_activity = activities[0] if activities else "idle"
+        start_idx = 0
+
+        for i, activity in enumerate(activities):
+            if activity != current_activity:
+                color = activity_colors.get(current_activity, "#FFFFFF")
+                ax.axvspan(
+                    timestamps[start_idx], timestamps[i - 1], alpha=0.3, color=color
+                )
+                current_activity = activity
+                start_idx = i
+
+        # Handle the last segment
+        if len(activities) > 0:
+            color = activity_colors.get(current_activity, "#FFFFFF")
+            ax.axvspan(timestamps[start_idx], timestamps[-1], alpha=0.3, color=color)
+
+    # Plot battery SoC line
+    ax.plot(
         df["hour"],
         df["battery_soc_percent"],
         label="Battery SoC",
         marker="o",
         linewidth=2,
         color="purple",
+        zorder=10,  # Ensure line appears above background
     )
-    ax3.set_title("Battery State of Charge")
-    ax3.set_ylabel("SoC (%)")
-    ax3.set_ylim(0, 100)
-    ax3.legend()
-    ax3.grid(True, alpha=0.3)
+    ax.set_title("Battery State of Charge")
+    ax.set_ylabel("SoC (%)")
+    ax.set_ylim(0, 100)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
-    # 4. Buy/Sell Prices
-    ax4 = axes[1, 0]
-    ax4.plot(
+
+def _plot_buy_sell_prices(ax: plt.Axes, df: pd.DataFrame) -> None:
+    """Plot buy/sell prices graph."""
+    ax.plot(
         df["hour"],
         df["buy_price"],
         label="Buy price",
@@ -451,7 +627,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="red",
     )
-    ax4.plot(
+    ax.plot(
         df["hour"],
         df["sell_price"],
         label="Sell price",
@@ -459,14 +635,15 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="green",
     )
-    ax4.set_title("Buy/Sell Prices")
-    ax4.set_ylabel("SEK/kWh")
-    ax4.legend()
-    ax4.grid(True, alpha=0.3)
+    ax.set_title("Buy/Sell Prices")
+    ax.set_ylabel("SEK/kWh")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
-    # 5. Battery activity
-    ax5 = axes[1, 1]
-    ax5.plot(
+
+def _plot_battery_activity(ax: plt.Axes, df: pd.DataFrame) -> None:
+    """Plot battery activity graph."""
+    ax.plot(
         df["hour"],
         df["battery_charge_wh"],
         label="Battery charging",
@@ -474,7 +651,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="green",
     )
-    ax5.plot(
+    ax.plot(
         df["hour"],
         df["battery_discharge_wh"],
         label="Battery discharging",
@@ -482,14 +659,15 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="red",
     )
-    ax5.set_title("Battery Activity")
-    ax5.set_ylabel("Energy (Wh)")
-    ax5.legend()
-    ax5.grid(True, alpha=0.3)
+    ax.set_title("Battery Activity")
+    ax.set_ylabel("Energy (Wh)")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
-    # 6. Energy flows comparison
-    ax6 = axes[1, 2]
-    ax6.plot(
+
+def _plot_energy_flows_comparison(ax: plt.Axes, df: pd.DataFrame) -> None:
+    """Plot energy flows comparison graph."""
+    ax.plot(
         df["hour"],
         df["actual_purchased_wh"],
         label="Purchased (with battery)",
@@ -497,7 +675,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="red",
     )
-    ax6.plot(
+    ax.plot(
         df["hour"],
         df["actual_sold_wh"],
         label="Sold (with battery)",
@@ -505,7 +683,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         linewidth=2,
         color="green",
     )
-    ax6.plot(
+    ax.plot(
         df["hour"],
         df["hypothetical_purchased_wh"],
         label="Would purchase (no battery)",
@@ -514,7 +692,7 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         alpha=0.7,
         color="darkred",
     )
-    ax6.plot(
+    ax.plot(
         df["hour"],
         df["hypothetical_sold_wh"],
         label="Would sell (no battery)",
@@ -523,21 +701,46 @@ def create_savings_plots(df: pd.DataFrame, save_path: Optional[str] = None) -> N
         alpha=0.7,
         color="darkgreen",
     )
-    ax6.set_title("Energy Flows Comparison")
-    ax6.set_ylabel("Energy (Wh)")
-    ax6.legend()
-    ax6.grid(True, alpha=0.3)
+    ax.set_title("Energy Flows Comparison")
+    ax.set_ylabel("Energy (Wh)")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
-    # Format x-axis for all subplots
+
+def _format_axes(axes: plt.Axes) -> None:
+    """Format all subplot axes with consistent styling."""
     for ax in axes.flat:
         ax.tick_params(axis="x", rotation=45)
         ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%H:%M"))
+
+
+def create_savings_plots(
+    df: pd.DataFrame, inverter_mode_5min: pd.DataFrame, save_path: Optional[str] = None
+) -> None:
+    """
+    Creates comprehensive plots showing energy flows, costs, and savings patterns.
+    """
+    # Set up the plotting style
+    _setup_plot_style()
+
+    # Create a figure with multiple subplots
+    fig, axes = _create_figure_with_subplots(df)
+
+    # Create individual plots
+    _plot_cost_revenue_breakdown(axes[0, 0], df)
+    _plot_net_cost_comparison(axes[0, 1], df)
+    _plot_battery_soc(axes[0, 2], df, inverter_mode_5min)
+    _plot_buy_sell_prices(axes[1, 0], df)
+    _plot_battery_activity(axes[1, 1], df)
+    _plot_energy_flows_comparison(axes[1, 2], df)
+
+    # Format all axes
+    _format_axes(axes)
 
     plt.tight_layout()
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        print(f"Plots saved to {save_path}")
     else:
         plt.show()
 
@@ -621,24 +824,26 @@ def print_summary_statistics(df: pd.DataFrame) -> None:
     )
 
 
-def main(evaluation_date: Optional[datetime] = None, save_plots: bool = False) -> None:
+def main(
+    evaluation_date: Optional[datetime] = None, save_plots: bool = False
+) -> pd.DataFrame:
     """
     Main function to run the savings analysis.
     """
-    print(f"Analyzing savings patterns...")
-
     # Run the analysis
     df = analyze_savings_patterns(evaluation_date)
 
-    # Print summary statistics
-    print_summary_statistics(df)
+    # Get the 5-minute inverter mode data for plotting
+    utc_start, utc_end = _convert_local_to_utc_range(evaluation_date)
+    _, _, _, _, _, inverter_mode_df = _fetch_energy_data(utc_start, utc_end)
+    inverter_mode_5min = _process_inverter_mode_data(inverter_mode_df)
 
     # Create and save plots
     if save_plots:
         plot_filename = f"savings_analysis_{df['hour'].iloc[0].date()}.png"
-        create_savings_plots(df, save_path=plot_filename)
+        create_savings_plots(df, inverter_mode_5min, save_path=plot_filename)
     else:
-        create_savings_plots(df)
+        create_savings_plots(df, inverter_mode_5min)
 
     return df
 
