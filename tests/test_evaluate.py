@@ -151,6 +151,50 @@ class TestEvaluateEnergyCalculations:
         assert savings == expected_savings
 
 
+class TestEvaluateEnergyStorageValue:
+    """Test energy storage value calculations."""
+
+    @patch("evaluator.evaluate.fetch_minutely_power")
+    @patch("evaluator.evaluate._add_hour_column_to_dataframe")
+    def test_calculate_energy_storage_value_diff(self, mock_add_hour, mock_fetch_power):
+        """Test energy storage value difference calculation."""
+        from evaluator.evaluate import _calculate_energy_storage_value_diff
+
+        # Mock the fetch_minutely_power calls for today and yesterday
+        mock_fetch_power.side_effect = [
+            pd.DataFrame(
+                {"timestamp": ["2025-07-28T00:00:00Z"], "value": [50.0]}
+            ),  # Today: 50% SoC
+            pd.DataFrame(
+                {"timestamp": ["2025-07-27T00:00:00Z"], "value": [30.0]}
+            ),  # Yesterday: 30% SoC
+        ]
+
+        # Mock price data
+        mock_price = MagicMock()
+        mock_price.get_sell_price.return_value = 0.85  # 0.85 SEK/kWh
+
+        price_per_hour = {datetime(2025, 7, 28, 0, 0): mock_price}
+
+        evaluation_date = datetime(2025, 7, 28, 0, 0)
+
+        # Calculate energy storage value difference
+        energy_today, energy_yesterday, energy_diff, diff_value = (
+            _calculate_energy_storage_value_diff(evaluation_date, price_per_hour)
+        )
+
+        # Verify calculations
+        # Battery capacity: 44000 Wh
+        # Today: 50% * 44000 = 22000 Wh
+        # Yesterday: 30% * 44000 = 13200 Wh
+        # Difference: 22000 - 13200 = 8800 Wh
+        # Value: 8800 Wh * (0.85 SEK/kWh / 1000) = 7.48 SEK
+        assert energy_today == 22000.0
+        assert energy_yesterday == 13200.0
+        assert energy_diff == 8800.0
+        assert abs(diff_value - 7.48) < 0.01
+
+
 class TestEvaluateDataProcessing:
     """Test data processing and aggregation logic."""
 

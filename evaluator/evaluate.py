@@ -239,6 +239,138 @@ def _print_results(
     )
 
 
+def _calculate_energy_storage_value(
+    evaluation_date: datetime, price_per_hour: dict[datetime, object]
+) -> tuple[float, float, float]:
+    """
+    Calculate the monetary value of energy stored in the battery at midnight.
+
+    Args:
+        evaluation_date: The date to evaluate
+        price_per_hour: Dictionary mapping hours to price objects
+
+    Returns:
+        tuple: (energy_stored_wh, storage_value_sek, midnight_sell_price)
+    """
+    # Get midnight timestamp in local time
+    midnight_local = evaluation_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Convert to UTC for InfluxDB query
+    midnight_utc = (
+        pd.Timestamp(midnight_local)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
+
+    # Query for SoC data around midnight (2-hour window to ensure we get data)
+    query_start = midnight_utc - timedelta(minutes=5)
+    query_end = midnight_utc + timedelta(minutes=5)
+
+    # Fetch SoC data from InfluxDB at 5-minute resolution
+    soc_df = fetch_minutely_power("energy.SoC", "value", query_start, query_end)
+
+    # Find the SoC reading closest to midnight
+    energy_stored_wh = 0.0
+    if len(soc_df) > 0:
+        battery_soc_percent = soc_df.iloc[0]["value"]
+
+        # Calculate energy stored (SoC percentage * battery capacity)
+        battery_capacity_wh = (
+            44000  # Adjust this if your battery has different capacity
+        )
+        energy_stored_wh = (battery_soc_percent / 100) * battery_capacity_wh
+
+    # Get the sell price at midnight
+    midnight_hour = midnight_local
+    midnight_price = price_per_hour.get(midnight_hour)
+    midnight_sell_price = midnight_price.get_sell_price() if midnight_price else 0
+
+    # Calculate storage value (convert Wh to kWh by dividing by 1000)
+    storage_value_sek = energy_stored_wh * (midnight_sell_price / 1000)
+
+    return energy_stored_wh, storage_value_sek, midnight_sell_price
+
+
+def _calculate_energy_storage_value_diff(
+    evaluation_date: datetime, price_per_hour: dict[datetime, object]
+) -> tuple[float, float, float, float]:
+    """
+    Calculate the monetary value of the change in energy stored between midnight today and midnight yesterday.
+
+    Args:
+        evaluation_date: The date to evaluate
+        price_per_hour: Dictionary mapping hours to price objects
+
+    Returns:
+        tuple: (energy_stored_today_wh, energy_stored_yesterday_wh, energy_diff_wh, diff_value_sek)
+    """
+    # Get midnight timestamps in local time
+    midnight_today = evaluation_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight_yesterday = midnight_today - timedelta(days=1)
+
+    # Convert to UTC for InfluxDB queries
+    midnight_today_utc = (
+        pd.Timestamp(midnight_today)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
+    midnight_yesterday_utc = (
+        pd.Timestamp(midnight_yesterday)
+        .tz_localize("Europe/Stockholm")
+        .tz_convert("UTC")
+        .tz_localize(None)
+    )
+
+    # Query for SoC data around both midnights
+    query_start_today = midnight_today_utc - timedelta(minutes=5)
+    query_end_today = midnight_today_utc + timedelta(minutes=5)
+    query_start_yesterday = midnight_yesterday_utc - timedelta(minutes=5)
+    query_end_yesterday = midnight_yesterday_utc + timedelta(minutes=5)
+
+    # Fetch SoC data from InfluxDB
+    soc_today_df = fetch_minutely_power(
+        "energy.SoC", "value", query_start_today, query_end_today
+    )
+    soc_yesterday_df = fetch_minutely_power(
+        "energy.SoC", "value", query_start_yesterday, query_end_yesterday
+    )
+
+    # Calculate energy stored for both days
+    battery_capacity_wh = 44000  # Adjust this if your battery has different capacity
+
+    energy_stored_today_wh = 0.0
+    if len(soc_today_df) > 0:
+        battery_soc_percent_today = soc_today_df.iloc[0]["value"]
+        energy_stored_today_wh = (battery_soc_percent_today / 100) * battery_capacity_wh
+
+    energy_stored_yesterday_wh = 0.0
+    if len(soc_yesterday_df) > 0:
+        battery_soc_percent_yesterday = soc_yesterday_df.iloc[0]["value"]
+        energy_stored_yesterday_wh = (
+            battery_soc_percent_yesterday / 100
+        ) * battery_capacity_wh
+
+    # Calculate energy difference
+    energy_diff_wh = energy_stored_today_wh - energy_stored_yesterday_wh
+
+    # Get the sell price at midnight today
+    midnight_hour = midnight_today
+    midnight_price = price_per_hour.get(midnight_hour)
+    midnight_sell_price = midnight_price.get_sell_price() if midnight_price else 0
+
+    # Calculate difference value (convert Wh to kWh by dividing by 1000)
+    diff_value_sek = energy_diff_wh * (midnight_sell_price / 1000)
+
+    return (
+        energy_stored_today_wh,
+        energy_stored_yesterday_wh,
+        energy_diff_wh,
+        diff_value_sek,
+    )
+
+
 def _save_prices_to_influxdb(prices: dict[datetime, object]) -> None:
     """Save spot prices to InfluxDB with correct timezone handling."""
     config = InfluxDBConfig()
@@ -271,7 +403,11 @@ def _save_prices_to_influxdb(prices: dict[datetime, object]) -> None:
 
 
 def _save_results_to_influxdb(
-    evaluation_date: datetime, total_no_battery_cost: float, actual_total_cost: float
+    evaluation_date: datetime,
+    total_no_battery_cost: float,
+    actual_total_cost: float,
+    energy_value_sek: float = 0.0,
+    energy_value_diff_sek: float = 0.0,
 ) -> None:
     """Save evaluation results to InfluxDB."""
     config = InfluxDBConfig()
@@ -284,6 +420,8 @@ def _save_results_to_influxdb(
                 "usage_cost": float(total_no_battery_cost),
                 "actual_cost": float(actual_total_cost),
                 "savings": float(total_no_battery_cost - actual_total_cost),
+                "energy_value": float(energy_value_sek),
+                "energy_value_diff": float(energy_value_diff_sek),
             },
             tags=None,
             timestamp=result_timestamp,
@@ -311,14 +449,52 @@ def main(evaluation_date: Optional[datetime] = None) -> None:
         utc_start, utc_end, price_per_hour
     )
 
+    # Calculate energy storage value at midnight
+    energy_stored_wh, storage_value_sek, midnight_sell_price = (
+        _calculate_energy_storage_value(evaluation_date, price_per_hour)
+    )
+
+    # Calculate energy storage value difference
+    (
+        energy_stored_today_wh,
+        energy_stored_yesterday_wh,
+        energy_diff_wh,
+        diff_value_sek,
+    ) = _calculate_energy_storage_value_diff(evaluation_date, price_per_hour)
+
     # Print results
     _print_results(evaluation_date, total_no_battery_cost, actual_total_cost)
+
+    # Print energy storage information
+    print(f"Energy storage analysis:")
+    print(f"  Battery SoC at midnight: {energy_stored_wh:.0f} Wh")
+    print(f"  Midnight sell price: {midnight_sell_price:.2f} SEK/kWh")
+    print(f"  Energy storage value: {storage_value_sek:.2f} SEK")
+    print(
+        f"  Adjusted savings: {(total_no_battery_cost - actual_total_cost + storage_value_sek):.2f} SEK\n"
+    )
+
+    # Print energy storage difference information
+    print(f"Energy storage difference analysis:")
+    print(f"  Battery SoC yesterday midnight: {energy_stored_yesterday_wh:.0f} Wh")
+    print(f"  Battery SoC today midnight: {energy_stored_today_wh:.0f} Wh")
+    print(f"  Energy difference: {energy_diff_wh:+.0f} Wh")
+    print(f"  Difference value (at today's price): {diff_value_sek:.2f} SEK")
+    print(
+        f"  Adjusted savings with diff: {(total_no_battery_cost - actual_total_cost + diff_value_sek):.2f} SEK\n"
+    )
 
     # Save spot prices to InfluxDB
     _save_prices_to_influxdb(original_prices)
 
     # Save results to InfluxDB
-    _save_results_to_influxdb(evaluation_date, total_no_battery_cost, actual_total_cost)
+    _save_results_to_influxdb(
+        evaluation_date,
+        total_no_battery_cost,
+        actual_total_cost,
+        storage_value_sek,
+        diff_value_sek,
+    )
 
 
 if __name__ == "__main__":

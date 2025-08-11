@@ -531,7 +531,7 @@ def _plot_cost_revenue_breakdown(ax: plt.Axes, df: pd.DataFrame) -> None:
 
 
 def _plot_net_cost_comparison(ax: plt.Axes, df: pd.DataFrame) -> None:
-    """Plot net cost comparison graph."""
+    """Plot net cost comparison graph with conditional colored areas."""
     ax.plot(
         df["hour"],
         df["actual_net_cost_sek"],
@@ -548,14 +548,37 @@ def _plot_net_cost_comparison(ax: plt.Axes, df: pd.DataFrame) -> None:
         linewidth=2,
         color="orange",
     )
-    ax.fill_between(
-        df["hour"],
-        df["actual_net_cost_sek"],
-        df["hypothetical_net_cost_sek"],
-        alpha=0.3,
-        color="green",
-        label="Savings area",
-    )
+
+    # Create conditional colored areas based on which scenario is better
+    # Green when battery performs better (with_battery < without_battery)
+    # Red when battery performs worse (without_battery < with_battery)
+
+    # Find where battery performs better (green areas)
+    battery_better = df["actual_net_cost_sek"] < df["hypothetical_net_cost_sek"]
+    if battery_better.any():
+        ax.fill_between(
+            df["hour"],
+            df["actual_net_cost_sek"],
+            df["hypothetical_net_cost_sek"],
+            where=battery_better,
+            alpha=0.3,
+            color="green",
+            label="Battery savings",
+        )
+
+    # Find where battery performs worse (red areas)
+    battery_worse = df["actual_net_cost_sek"] > df["hypothetical_net_cost_sek"]
+    if battery_worse.any():
+        ax.fill_between(
+            df["hour"],
+            df["actual_net_cost_sek"],
+            df["hypothetical_net_cost_sek"],
+            where=battery_worse,
+            alpha=0.3,
+            color="red",
+            label="Battery cost",
+        )
+
     ax.set_title("Net Cost Comparison (Lower is Better)")
     ax.set_ylabel("SEK")
     ax.axhline(y=0, color="black", linestyle="-", alpha=0.3)
