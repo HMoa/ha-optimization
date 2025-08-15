@@ -58,10 +58,12 @@ class BatteryOptimizerWorkflow:
 
         influx_values = get_initial_consumption_values()
 
-        print("Creating predictions")
+        print("Creating consumption prediction")
         consumption = get_consumption_with_initial_values(
             start_date, end_date, influx_values
         )
+
+        print("Creating production prediction")
         production = get_production(start_date, end_date)
         print("Done creating predictions")
 

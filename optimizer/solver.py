@@ -155,14 +155,14 @@ class Solver:
                 -prices[get_closest_price_timeslot(i)].get_sell_price(),
             )
             objective.SetCoefficient(
-                variables["battery_charge_wh"][i], 0.01
+                variables["battery_charge_wh"][i], 0.001
             )  # Penalty for charging
             objective.SetCoefficient(
                 variables["soc_deficit_wh"][i], soc_penalty_coefficient
             )  # Penalty for low SOC
 
             objective.SetCoefficient(
-                variables["battery_energy_wh"][i], -0.001
+                variables["battery_energy_wh"][i], -0.0001
             )  # Miniscule soc bonus, to favour leaving discharge to end of period instead of randomly in the middle
 
         # Add neutral final SOC value to prevent end-of-horizon sell-off
