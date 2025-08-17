@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-# Add the optimizer directory to the path to import the InfluxDB client
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Tuple
@@ -17,71 +15,76 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import cross_val_score, train_test_split
 
+# Add the optimizer directory to the path to import the InfluxDB client
+import sys
 sys.path.append(str(Path(__file__).parent.parent / "optimizer"))
 
-from influxdb_client import InfluxDBClientWrapper, InfluxDBConfig
+from influxdb_client import InfluxDBConfig, InfluxDBClientWrapper
 
 
 def fetch_consumption_data_from_influx(
-    config_path: str = "../config/influxdb_config.json",
+    start_date: datetime, 
+    end_date: datetime,
+    config_path: str = "../config/influxdb_config.json"
 ) -> pd.DataFrame:
-    """Fetch consumption data from InfluxDB with 5-minute intervals"""
-    print("Fetching data from InfluxDB 'power.consumed' measurement")
-
+    """Fetch consumption data from InfluxDB for a specific date range"""
+    print(f"Fetching data from InfluxDB from {start_date} to {end_date}")
+    
     config = InfluxDBConfig(config_path)
-
+    
     with InfluxDBClientWrapper(config) as client:
         if not client.test_connection():
-            raise ConnectionError(
-                "Failed to connect to InfluxDB. Check your configuration."
-            )
-
-        # Build InfluxQL query to get all available data with 5-minute aggregation
+            raise ConnectionError("Failed to connect to InfluxDB. Check your configuration.")
+        
+        # Build InfluxQL query for the specific date range
+        start_time = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_time = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        
         influxql_query = f"""
         SELECT MEAN({config.field}) as value
         FROM "{config.measurement}"
+        WHERE time >= '{start_time}' AND time <= '{end_time}'
         GROUP BY time(5m)
         ORDER BY time ASC
         """
-
+        
         try:
             # Execute query
             result = client.client.query(influxql_query)
-
+            
             # Extract data from result
             data = []
             for point in result.get_points():
                 if point["value"] is not None:
                     # Parse the timestamp
                     timestamp = pd.to_datetime(point["time"])
-                    data.append({"time": timestamp, "value": float(point["value"])})
-
+                    data.append({
+                        "time": timestamp,
+                        "value": float(point["value"])
+                    })
+            
             df = pd.DataFrame(data)
-
+            
             if df.empty:
-                print("Warning: No data found in InfluxDB")
+                print("Warning: No data found for the specified date range")
                 return df
-
-            print(
-                f"Fetched {len(df)} records from {df['time'].min()} to {df['time'].max()}"
-            )
-            print(
-                f"Consumption range: {df['value'].min():.2f} - {df['value'].max():.2f} W"
-            )
-
+            
+            print(f"Fetched {len(df)} records from {df['time'].min()} to {df['time'].max()}")
+            print(f"Consumption range: {df['value'].min():.2f} - {df['value'].max():.2f} W")
+            
             return df
-
+            
         except Exception as e:
             print(f"Error fetching data from InfluxDB: {e}")
             return pd.DataFrame(columns=["time", "value"])
 
 
-def load_and_clean_data() -> pd.DataFrame:
+def load_and_clean_data_influx(start_date: datetime, end_date: datetime) -> pd.DataFrame:
     """Load and clean consumption data from InfluxDB"""
-    print("Loading data from InfluxDB")
+    print(f"Loading data from InfluxDB for {start_date.date()} to {end_date.date()}")
 
     # Fetch data from InfluxDB
-    df = fetch_consumption_data_from_influx()
+    df = fetch_consumption_data_from_influx(start_date, end_date)
 
     if df.empty:
         raise ValueError("No data retrieved from InfluxDB")
@@ -104,41 +107,42 @@ def load_and_clean_data() -> pd.DataFrame:
     return df
 
 
-def add_optimized_time_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Add optimized time-based features based on parameter search results"""
+def add_basic_time_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add basic time-based features only"""
     df = df.copy()
 
-    # Basic time features
+    # Basic time features (same as original working script)
     df["day_of_year"] = df["time"].dt.dayofyear
     df["minutes_of_day"] = df["time"].dt.hour * 60 + df["time"].dt.minute
     df["minutes_sin"] = np.sin(2 * np.pi * df["minutes_of_day"] / (24 * 60))
     df["minutes_cos"] = np.cos(2 * np.pi * df["minutes_of_day"] / (24 * 60))
 
-    # Day of week features (cyclical encoding only - tested better than raw + cyclical)
-    day_of_week = df["time"].dt.dayofweek
-    df["day_of_week_sin"] = np.sin(2 * np.pi * day_of_week / 7)
-    df["day_of_week_cos"] = np.cos(2 * np.pi * day_of_week / 7)
+    # Add lagged features (5-minute intervals)
+    df["consumption_lag_1"] = df["value"].shift(1)  # 5 minutes ago
+    df["consumption_lag_2"] = df["value"].shift(2)  # 10 minutes ago
 
-    # Hour features (cyclical encoding only - tested better than raw + cyclical)
-    hour = df["time"].dt.hour
-    df["hour_sin"] = np.sin(2 * np.pi * hour / 24)
-    df["hour_cos"] = np.cos(2 * np.pi * hour / 24)
+    # Add rolling mean (6 periods = 30 minutes)
+    df["consumption_rolling_mean_6"] = df["value"].rolling(6).mean()
 
-    # Optimized lagged features (5 lags showed best performance in parameter search)
-    for lag in range(1, 6):  # 1 to 5 lags (5, 10, 15, 20, 25 minutes ago)
-        df[f"consumption_lag_{lag}"] = df["value"].shift(lag)
-
-    # Rolling features (showed improvement in parameter search)
-    df["consumption_rolling_mean_6"] = df["value"].rolling(6).mean()  # 30 minutes
-    df["consumption_rolling_std_6"] = df["value"].rolling(6).std()  # 30 minutes
+    # Add rolling standard deviation (6 periods = 30 minutes)
+    df["consumption_rolling_std_6"] = df["value"].rolling(6).std()
 
     return df
 
 
 def prepare_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
     """Prepare features and target for modeling"""
-    # Get all feature columns (exclude 'time' and 'value')
-    feature_columns = [col for col in df.columns if col not in ["time", "value"]]
+    # Select features including lags and rolling mean
+    feature_columns = [
+        "day_of_year",
+        "minutes_of_day",
+        "minutes_sin",
+        "minutes_cos",
+        "consumption_lag_1",
+        "consumption_lag_2",
+        "consumption_rolling_mean_6",
+        "consumption_rolling_std_6",
+    ]
 
     # Remove rows with NaN values (first few rows will have NaN due to lags and rolling)
     df_clean = df.dropna(subset=feature_columns + ["value"])
@@ -188,20 +192,30 @@ def plot_feature_importance(
         {"feature": feature_names, "importance": importance}
     ).sort_values("importance", ascending=False)
 
+    # Plot feature importance
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=importance_df, x="importance", y="feature")
+    plt.title(f"Feature Importance - {model_name}")
+    plt.xlabel("Importance")
+    plt.tight_layout()
+    plt.show()
+
 
 def main() -> None:
-    """Main function to train and evaluate ultimate consumption model"""
-    print("=== Ultimate Power Consumption Model with InfluxDB Data ===")
-    print(
-        "Using optimized features based on parameter search: 5 lags, day/hour features"
-    )
+    """Main function to train and evaluate consumption model with InfluxDB data"""
+    print("=== Power Consumption Model with InfluxDB Data ===")
+    print("Using data from InfluxDB 'power.consumed' measurement")
+
+    # Set date range for August 8th, 2025 (has 1439 data points)
+    start_date = datetime(2025, 8, 8, 0, 0, 0)
+    end_date = datetime(2025, 8, 8, 23, 59, 59)
 
     # Load and prepare data
-    df = load_and_clean_data()
+    df = load_and_clean_data_influx(start_date, end_date)
 
-    # Add optimized features based on parameter search
-    print("\nAdding optimized time features (5 lags, day/hour features)...")
-    df = add_optimized_time_features(df)
+    # Add basic features only
+    print("\nAdding basic time features...")
+    df = add_basic_time_features(df)
 
     # Prepare features and target
     X, y = prepare_features(df)
@@ -214,15 +228,8 @@ def main() -> None:
     print(f"\nTraining set: {len(X_train)} samples")
     print(f"Test set: {len(X_test)} samples")
 
-    # Define optimized models based on parameter search results
+    # Define models
     models = {
-        "Gradient Boosting (Optimized)": GradientBoostingRegressor(
-            n_estimators=100,
-            max_depth=6,
-            learning_rate=0.1,
-            subsample=0.8,  # Prevent overfitting
-            random_state=42,
-        ),
         "Random Forest": RandomForestRegressor(
             n_estimators=100,
             max_depth=10,
@@ -230,6 +237,9 @@ def main() -> None:
             min_samples_leaf=2,
             random_state=42,
             n_jobs=-1,
+        ),
+        "Gradient Boosting": GradientBoostingRegressor(
+            n_estimators=100, max_depth=6, learning_rate=0.1, random_state=42
         ),
         "Linear Regression": LinearRegression(),
     }
@@ -268,30 +278,26 @@ def main() -> None:
     print(f"CV RMSE: {cv_rmse.mean():.2f} ± {cv_rmse.std():.2f}")
 
     # Save best model
-    model_path = Path("../models/power-consumption-ultimate.joblib")
+    model_path = Path("../models/power-consumption-influx.joblib")
     model_path.parent.mkdir(exist_ok=True)
     joblib.dump(best_model, model_path)
-    print(f"\nBest ultimate model saved to {model_path}")
+    print(f"\nBest model saved to {model_path}")
 
     # Print summary
     print(f"\n{'='*50}")
-    print("ULTIMATE MODEL COMPARISON SUMMARY:")
-    print(f"{'Model':<25} {'RMSE':<10} {'MAE':<10} {'R²':<10}")
-    print("-" * 55)
+    print("INFLUXDB MODEL COMPARISON SUMMARY:")
+    print(f"{'Model':<20} {'RMSE':<10} {'MAE':<10} {'R²':<10}")
+    print("-" * 50)
     for name, metrics in results.items():
         print(
-            f"{name:<25} {metrics['rmse']:<10.2f} {metrics['mae']:<10.2f} {metrics['r2']:<10.4f}"
+            f"{name:<20} {metrics['rmse']:<10.2f} {metrics['mae']:<10.2f} {metrics['r2']:<10.4f}"
         )
 
-    print(f"\nBest model: {best_model.__class__.__name__} (RMSE: {best_score:.2f} W)")
-    print(f"Data source: InfluxDB 'power.consumed' measurement")
-    print(f"Data aggregation: 5-minute intervals")
-    print(f"Optimized features: 5 lags, cyclical day/hour features, rolling stats")
     print(
-        f"Final improvement: {((321.98 - best_score) / 321.98 * 100):.1f}% over baseline"
+        f"\nBest model: {best_model.__class__.__name__} (RMSE: {best_score:.2f} W)"
     )
-    print(f"Feature count: 15 (reduced from 17 by removing redundant raw values)")
-    print("\n🎯 This is the ultimate consumption prediction model!")
+    print(f"Data source: InfluxDB 'power.consumed' measurement")
+    print(f"Date range: {start_date.date()} to {end_date.date()}")
 
 
 if __name__ == "__main__":

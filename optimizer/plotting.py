@@ -137,7 +137,8 @@ def save_schedule_plot(
         label="Battery SOC %",
         linewidth=2,
     )
-    ax1.set_ylabel("Battery %")
+    ax1.set_ylabel("Battery %", color="tab:green")
+    ax1.tick_params(axis="y", labelcolor="tab:green")
     ax1.set_xlabel("Time")
     ax2 = ax1.twinx()
     ax2.plot(
