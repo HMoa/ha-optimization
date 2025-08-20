@@ -253,8 +253,8 @@ def main() -> None:
         # Plot feature importance
         plot_feature_importance(model, X.columns, name)
 
-        # Track best model
-        if rmse < best_score:
+        # Track best model (excluding Linear Regression which shows overfitting)
+        if rmse < best_score and name != "Linear Regression":
             best_score = rmse
             best_model = model
 

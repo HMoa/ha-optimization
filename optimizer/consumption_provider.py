@@ -10,7 +10,7 @@ import pandas as pd
 
 
 def add_features_for_prediction(df: pd.DataFrame) -> pd.DataFrame:
-    """Add all the features used in our trained model"""
+    """Add all the features used in our ultimate trained model"""
     df = df.copy()
 
     # Basic time features
@@ -19,9 +19,19 @@ def add_features_for_prediction(df: pd.DataFrame) -> pd.DataFrame:
     df["minutes_sin"] = np.sin(2 * np.pi * df["minutes_of_day"] / (24 * 60))
     df["minutes_cos"] = np.cos(2 * np.pi * df["minutes_of_day"] / (24 * 60))
 
-    # Add lagged features (5-minute intervals)
-    df["consumption_lag_1"] = df["value"].shift(1)  # 5 minutes ago
-    df["consumption_lag_2"] = df["value"].shift(2)  # 10 minutes ago
+    # Day of week features (cyclical encoding only)
+    day_of_week = df["time"].dt.dayofweek
+    df["day_of_week_sin"] = np.sin(2 * np.pi * day_of_week / 7)
+    df["day_of_week_cos"] = np.cos(2 * np.pi * day_of_week / 7)
+
+    # Hour features (cyclical encoding only)
+    hour = df["time"].dt.hour
+    df["hour_sin"] = np.sin(2 * np.pi * hour / 24)
+    df["hour_cos"] = np.cos(2 * np.pi * hour / 24)
+
+    # Add optimized lagged features (5 lags for best performance)
+    for lag in range(1, 6):  # 1 to 5 lags (5, 10, 15, 20, 25 minutes ago)
+        df[f"consumption_lag_{lag}"] = df["value"].shift(lag)
 
     # Add rolling features (6 periods = 30 minutes)
     df["consumption_rolling_mean_6"] = df["value"].rolling(6).mean()
@@ -31,17 +41,9 @@ def add_features_for_prediction(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def prepare_features_for_prediction(df: pd.DataFrame) -> pd.DataFrame:
-    """Prepare features for prediction (same columns as training)"""
-    feature_columns = [
-        "day_of_year",
-        "minutes_of_day",
-        "minutes_sin",
-        "minutes_cos",
-        "consumption_lag_1",
-        "consumption_lag_2",
-        "consumption_rolling_mean_6",
-        "consumption_rolling_std_6",
-    ]
+    """Prepare features for prediction (same columns as ultimate model training)"""
+    # Get all feature columns (exclude 'time' and 'value')
+    feature_columns = [col for col in df.columns if col not in ["time", "value"]]
 
     return df[feature_columns]
 
@@ -65,9 +67,9 @@ def get_consumption_with_initial_values(
         microseconds=start_date.microsecond,
     )
 
-    # Load the improved model
+    # Load the ultimate model
     model_path = os.path.join(
-        os.path.dirname(__file__), "../models/power-consumption-baseline.joblib"
+        os.path.dirname(__file__), "../models/power-consumption-ultimate.joblib"
     )
 
     if not os.path.exists(model_path):
@@ -142,10 +144,10 @@ def get_consumption_with_initial_values(
         history_times.append(current_time)
         history_values.append(prediction)
 
-        # Keep only the last 10 periods to avoid memory issues
-        if len(history_times) > 10:
-            history_times = history_times[-10:]
-            history_values = history_values[-10:]
+        # Keep only the last 15 periods to support 5 lags + rolling features
+        if len(history_times) > 15:
+            history_times = history_times[-15:]
+            history_values = history_values[-15:]
 
     return consumption_data
 
@@ -159,15 +161,19 @@ if __name__ == "__main__":
 
     try:
         print("\n1. Method with provided initial consumption values:")
-        # Provide 6 periods of history (most recent last)
+        # Provide 10 periods of history (most recent last) to support 5 lags + rolling features
         initial_values = [
-            600.0,
-            650.0,
-            700.0,
-            750.0,
-            800.0,
-            750.0,
-        ]  # 30 minutes of history
+            600.0,  # 50 minutes ago
+            650.0,  # 45 minutes ago
+            700.0,  # 40 minutes ago
+            750.0,  # 35 minutes ago
+            800.0,  # 30 minutes ago
+            750.0,  # 25 minutes ago
+            700.0,  # 20 minutes ago
+            650.0,  # 15 minutes ago
+            600.0,  # 10 minutes ago
+            550.0,  # 5 minutes ago
+        ]  # 50 minutes of history
         initial_response = get_consumption_with_initial_values(
             start_time, end_time, initial_values
         )
