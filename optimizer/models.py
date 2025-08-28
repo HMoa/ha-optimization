@@ -28,6 +28,8 @@ class TimeslotItem:
     activity: Activity
     grid_flow_wh: float  # Positive for import, negative for export
     amount: float | None = None
+    ev_energy_wh: float = 0.0
+    ev_soc_percent: float = 0.0
 
     real_battery_flow_w: float = (
         10000  # We want the percent of real max, not optimizer max allowed
@@ -41,6 +43,8 @@ class TimeslotItem:
         self.battery_expected_soc_percent = round(self.battery_expected_soc_percent, 2)
         self.house_consumption_wh = round(self.house_consumption_wh, 2)
         self.grid_flow_wh = round(self.grid_flow_wh, 2)
+        self.ev_energy_wh = round(self.ev_energy_wh, 2)
+        self.ev_soc_percent = round(self.ev_soc_percent, 2)
         if self.amount is not None:
             self.amount = round(self.amount, 2)
 

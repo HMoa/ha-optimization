@@ -3,5 +3,8 @@
   "storage_size_wh": 44000,
   "initial_energy": 1000.0,
   "max_charge_speed_w": 8000,
-  "max_discharge_speed_w": 9000
+  "max_discharge_speed_w": 9000,
+  "ev_max_capacity_wh": 100000,
+  "ev_max_charge_speed_w": 10000,
+  "fuse_capacity_w": 11000
 }

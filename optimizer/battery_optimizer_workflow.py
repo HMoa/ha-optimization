@@ -14,7 +14,12 @@ from optimizer.solver import Solver
 
 
 class BatteryOptimizerWorkflow:
-    def __init__(self, battery_percent: float) -> None:
+    def __init__(
+        self,
+        battery_percent: float,
+        ev_soc_percent: float | None = None,
+        ev_ready_time: str | None = None,
+    ) -> None:
         self.config = BatteryConfig.default_config()
         self.config.initial_energy = float(
             battery_percent * self.config.storage_size_wh / 100
@@ -22,6 +27,29 @@ class BatteryOptimizerWorkflow:
         print(
             f"Initial energy: {self.config.initial_energy} and percent: {battery_percent}"
         )
+
+        # Handle EV parameters
+        self.ev_soc_percent = ev_soc_percent
+        self.ev_ready_time = None
+        if ev_ready_time:
+            try:
+                # Parse the datetime and ensure it's timezone-aware
+                parsed_time = datetime.fromisoformat(ev_ready_time)
+                if parsed_time.tzinfo is None:
+                    # If no timezone info, assume current local timezone
+                    self.ev_ready_time = parsed_time.replace(
+                        tzinfo=datetime.now().astimezone().tzinfo
+                    )
+                else:
+                    self.ev_ready_time = parsed_time
+                print(f"EV ready time: {self.ev_ready_time}")
+            except ValueError as e:
+                print(f"Warning: Invalid EV ready time format: {e}")
+                self.ev_ready_time = None
+
+        if ev_soc_percent is not None:
+            print(f"EV SOC: {ev_soc_percent}%")
+
         self.solver = Solver(timeslot_length=5)
         self.schedule: dict[datetime, TimeslotItem] | None = None
 
@@ -68,7 +96,12 @@ class BatteryOptimizerWorkflow:
         print("Done creating predictions")
 
         schedule = self.solver.create_schedule(
-            production, consumption, prices, self.config
+            production,
+            consumption,
+            prices,
+            self.config,
+            self.ev_soc_percent,
+            self.ev_ready_time,
         )
         if schedule is None:
             print("No schedule found")

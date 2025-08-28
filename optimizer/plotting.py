@@ -8,7 +8,9 @@ import matplotlib.pyplot as plt
 from optimizer.models import TimeslotItem
 
 
-def show_schedule_plot(schedule: Dict[datetime, TimeslotItem]) -> None:
+def show_schedule_plot(
+    schedule: dict[datetime, TimeslotItem], battery_config=None
+) -> None:
     fig, ax1 = plt.subplots(figsize=(12, 8))
     activity_colors = {
         "charge": "#40EE60",
@@ -76,6 +78,21 @@ def show_schedule_plot(schedule: Dict[datetime, TimeslotItem]) -> None:
     )
     ax3.set_ylabel("Battery SOC (Wh)", color="tab:green")
     ax3.tick_params(axis="y", labelcolor="tab:green")
+
+    # Add EV SOC if configured
+    if battery_config and battery_config.has_ev_charging():
+        ax4 = ax1.twinx()
+        ax4.spines["right"].set_position(("outward", 120))
+        ax4.plot(
+            list(schedule.keys()),
+            [item.ev_soc_percent for item in schedule.values()],
+            color="tab:blue",
+            label="EV SOC %",
+            linewidth=2,
+            linestyle="--",
+        )
+        ax4.set_ylabel("EV SOC %", color="tab:blue")
+        ax4.tick_params(axis="y", labelcolor="tab:blue")
     activity_legend_elements = []
     for activity, color in activity_colors.items():
         activity_legend_elements.append(
@@ -103,7 +120,9 @@ def show_schedule_plot(schedule: Dict[datetime, TimeslotItem]) -> None:
 
 
 def save_schedule_plot(
-    schedule: Dict[datetime, TimeslotItem], save_path: str = "schedule.png"
+    schedule: Dict[datetime, TimeslotItem],
+    save_path: str = "schedule.png",
+    battery_config=None,
 ) -> None:
     fig, ax1 = plt.subplots(figsize=(12, 8))
     activity_colors = {
@@ -140,6 +159,18 @@ def save_schedule_plot(
     ax1.set_ylabel("Battery %", color="tab:green")
     ax1.tick_params(axis="y", labelcolor="tab:green")
     ax1.set_xlabel("Time")
+
+    # Add EV SOC if configured
+    if battery_config and battery_config.has_ev_charging():
+        ax1.plot(
+            list(schedule.keys()),
+            [item.ev_soc_percent for item in schedule.values()],
+            color="tab:blue",
+            label="EV SOC %",
+            linewidth=2,
+            linestyle="--",
+        )
+
     ax2 = ax1.twinx()
     ax2.plot(
         list(schedule.keys()),

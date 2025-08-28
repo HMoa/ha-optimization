@@ -22,17 +22,23 @@ def plot_outcome(battery_percent: float) -> int:
     if schedule is None:
         print("No schedule available to plot")
         return 1
-    show_schedule_plot(schedule)
+    show_schedule_plot(schedule, workflow.config)
     return 0
 
 
 def generate_schedule(
     battery_percent: float,
+    ev_soc_percent: float | None = None,
+    ev_ready_time: str | None = None,
     save: bool = False,
     save_image: bool = False,
 ) -> None:
 
-    workflow = BatteryOptimizerWorkflow(battery_percent=battery_percent)
+    workflow = BatteryOptimizerWorkflow(
+        battery_percent=battery_percent,
+        ev_soc_percent=ev_soc_percent,
+        ev_ready_time=ev_ready_time,
+    )
     workflow.generate_schedule()
 
     if workflow.schedule is None:
@@ -59,7 +65,9 @@ def generate_schedule(
     if save_image:
         from optimizer.plotting import save_schedule_plot
 
-        save_schedule_plot(workflow.schedule, save_path="schedule.png")
+        save_schedule_plot(
+            workflow.schedule, save_path="schedule.png", battery_config=workflow.config
+        )
         print("Schedule plot saved as schedule.png")
 
 
@@ -72,6 +80,18 @@ def main() -> None:
         type=float,
         default=84,
         help="Initial battery percent",
+    )
+    parser.add_argument(
+        "--ev_soc_percent",
+        type=float,
+        default=None,
+        help="Current EV battery state of charge (percent)",
+    )
+    parser.add_argument(
+        "--ev_ready_time",
+        type=str,
+        default=None,
+        help="When the EV should be charged and ready (ISO format: YYYY-MM-DDTHH:MM:SS)",
     )
     parser.add_argument(
         "--generate_schedule",
@@ -146,6 +166,8 @@ def main() -> None:
 
         generate_schedule(
             args.battery_percent,
+            ev_soc_percent=args.ev_soc_percent,
+            ev_ready_time=args.ev_ready_time,
             save=args.save,
             save_image=args.save_image,
         )

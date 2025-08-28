@@ -18,11 +18,31 @@ alwaysApply: false
 - Cannot charge and discharge simultaneously
 - SOC evolution: charging increases by (charge_wh * 0.95), discharging decreases by discharge_wh
 
+## EV Charging Support
+- Optional feature: EV charging can be enabled via config
+- EV parameters: ev_max_capacity_wh, ev_max_charge_speed_w
+- Detection: battery_config.has_ev_charging() checks if both parameters are set
+- Integration: _setup_ev_charging() method called when EV charging is configured AND ready time is specified
+- Graceful degradation: No EV charging when parameters are null/missing OR when no ready time is provided
+- Command line: --ev_soc_percent and --ev_ready_time parameters for real-time EV state
+- Initial EV SOC: Can be specified as percentage, defaults to 0% if not provided
+- EV charging objectives: 10 penalty per percent below 90% target SOC
+- Ready time logic: Within period = target 90% at ready time, outside period = scale target with progress
+- Visualization: EV SOC shown in plots when configured (blue dashed line)
+- TimeslotItem: Contains ev_energy_wh and ev_soc_percent fields
+- Timezone handling: EV ready time automatically made timezone-aware using local timezone
+- Conditional activation: EV charging logic only runs when ev_ready_time is provided
+
 ## Optimization Structure
-- Variables: grid_import, grid_export, battery_charge, battery_discharge, battery_energy, soc_deficit
-- Constraints: energy_balance, battery_state, mutual_exclusion, soc_penalty
-- Objective: minimize (grid_import_cost - grid_export_revenue + charging_penalty + soc_penalty)
-- Energy balance: production + grid_import + battery_discharge = consumption + battery_charge + grid_export
+- Variables: grid_import, grid_export, grid_flow_direction, battery_charge, battery_discharge, battery_energy, soc_deficit, ev_energy_wh, ev_charge_w, ev_deficit_wh
+- Constraints: energy_balance, battery_state, mutual_exclusion, soc_penalty, ev_soc_evolution, ev_deficit_penalty, grid_mutual_exclusion
+- Objective: minimize (grid_import_cost - grid_export_revenue + charging_penalty + soc_penalty + ev_deficit_penalty)
+- Energy balance: production + grid_import + battery_discharge = consumption + battery_charge + ev_charge_w + grid_export
+- EV variables: Always present for energy balance, bounds depend on configuration
+- EV deficit: Only created for target timeslot (ready time or end of period)
+- Unit conversion: ev_charge_w (Watts) converted to energy using toWh() for energy balance and SOC evolution
+- Fuse capacity: Individual bounds on grid_import_wh and grid_export_wh (0 to toWh(fuse_capacity_w))
+- Grid mutual exclusion: Binary variable ensures import and export never happen simultaneously
 
 ## Activity Classification
 - CHARGE_SOLAR_SURPLUS: Using excess solar to charge
