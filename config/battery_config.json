@@ -6,5 +6,6 @@
   "max_discharge_speed_w": 9000,
   "ev_max_capacity_wh": 100000,
   "ev_max_charge_speed_w": 10000,
+  "ev_max_charge_price_kr_per_kwh": 2.0,
   "fuse_capacity_w": 11000
 }

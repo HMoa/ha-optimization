@@ -22,12 +22,16 @@ alwaysApply: false
 - Optional feature: EV charging can be enabled via config
 - EV parameters: ev_max_capacity_wh, ev_max_charge_speed_w
 - Detection: battery_config.has_ev_charging() checks if both parameters are set
-- Integration: _setup_ev_charging() method called when EV charging is configured AND ready time is specified
+- Integration: EVChargingManager.setup_ev_charging() called when EV charging is configured AND ready time is specified
 - Graceful degradation: No EV charging when parameters are null/missing OR when no ready time is provided
 - Command line: --ev_soc_percent and --ev_ready_time parameters for real-time EV state
 - Initial EV SOC: Can be specified as percentage, defaults to 0% if not provided
-- EV charging objectives: 10 penalty per percent below 90% target SOC
-- Ready time logic: Within period = target 90% at ready time, outside period = scale target with progress
+- EV charging objectives: max_price per kWh below 100% target SOC (configurable)
+- Ready time logic: Find closest timeslot to ready time, within period = target 100% at ready time, outside period = scale target and price with progress
+- Max charge price: Configurable via ev_max_charge_price_kr_per_kwh (default 2.0 kr/kWh)
+- Price scaling: When ready time outside period, both target and max price are scaled by time progress
+- Conditional activation: EV charging logic only runs when ev_ready_time is provided
+- Economic rationale: Uses configurable max price per kWh instead of arbitrary penalty, making it easier to relate to actual electricity prices
 - Visualization: EV SOC shown in plots when configured (blue dashed line)
 - TimeslotItem: Contains ev_energy_wh and ev_soc_percent fields
 - Timezone handling: EV ready time automatically made timezone-aware using local timezone
@@ -40,6 +44,7 @@ alwaysApply: false
 - Energy balance: production + grid_import + battery_discharge = consumption + battery_charge + ev_charge_w + grid_export
 - EV variables: Always present for energy balance, bounds depend on configuration
 - EV deficit: Only created for target timeslot (ready time or end of period)
+- EV pricing: Uses configurable max_price per kWh deficiency, not arbitrary penalty
 - Unit conversion: ev_charge_w (Watts) converted to energy using toWh() for energy balance and SOC evolution
 - Fuse capacity: Individual bounds on grid_import_wh and grid_export_wh (0 to toWh(fuse_capacity_w))
 - Grid mutual exclusion: Binary variable ensures import and export never happen simultaneously
@@ -55,6 +60,7 @@ alwaysApply: false
 ## Implementation Patterns
 - Separate setup methods: _setup_variables(), _setup_constraints(), _setup_objective()
 - Use internal methods (underscore prefix) for implementation details
+- Modular design: EV charging logic separated into EVChargingManager class
 - Strict typing with proper annotations
 - Linear optimization with GLOP solver for speed
 - Allow small numerical tolerance in tests (floating point precision)

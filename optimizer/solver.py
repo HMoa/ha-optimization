@@ -8,6 +8,7 @@ from typing import Any, cast
 from ortools.linear_solver import pywraplp  # type: ignore
 
 from optimizer.battery_config import BatteryConfig
+from optimizer.ev_charging import EVChargingManager
 from optimizer.models import Activity, Elpris, TimeslotItem
 
 
@@ -15,6 +16,7 @@ class Solver:
     def __init__(self, timeslot_length: int):
         self.solver = None
         self.timeslot_length = timeslot_length
+        self.ev_manager = None
 
     def toWh(self, value: float) -> float:
         return value * (self.timeslot_length / 60)
@@ -27,13 +29,17 @@ class Solver:
         """Setup all optimization variables."""
         grid_import_wh = {
             i: self.solver.NumVar(
-                0, self.toWh(battery_config.fuse_capacity_w), f"grid_import_{i}"
+                0,
+                self.toWh(float(battery_config.fuse_capacity_w)),
+                f"grid_import_{i}",
             )
             for i in production_w.keys()
         }
         grid_export_wh = {
             i: self.solver.NumVar(
-                0, self.toWh(battery_config.fuse_capacity_w), f"grid_export_{i}"
+                0,
+                self.toWh(float(battery_config.fuse_capacity_w)),
+                f"grid_export_{i}",
             )
             for i in production_w.keys()
         }
@@ -72,36 +78,8 @@ class Solver:
             for i in production_w.keys()
         }
 
-        # EV SOC variables - always present for energy balance
-        ev_energy_wh = {
-            i: self.solver.NumVar(
-                0,
-                (
-                    battery_config.ev_max_capacity_wh
-                    if battery_config.has_ev_charging()
-                    else 0
-                ),
-                f"ev_energy_{i}",
-            )
-            for i in production_w.keys()
-        }
-
-        # EV charging variables - always present for energy balance (in Watts)
-        ev_charge_w = {
-            i: self.solver.NumVar(
-                0,
-                (
-                    battery_config.ev_max_charge_speed_w
-                    if battery_config.has_ev_charging()
-                    else 0
-                ),
-                f"ev_charge_{i}",
-            )
-            for i in production_w.keys()
-        }
-
-        # EV deficit penalty variables - will be created only for target timeslot
-        ev_deficit_wh = {}
+        # EV variables will be set up by EVChargingManager
+        ev_variables = {}
 
         return {
             "grid_import_wh": grid_import_wh,
@@ -112,9 +90,7 @@ class Solver:
             "battery_energy_wh": battery_energy_wh,
             "is_charging_or_discharging": is_charging_or_discharging,
             "soc_deficit_wh": soc_deficit_wh,
-            "ev_energy_wh": ev_energy_wh,
-            "ev_charge_w": ev_charge_w,
-            "ev_deficit_wh": ev_deficit_wh,
+            **ev_variables,
         }
 
     def _setup_constraints(
@@ -183,12 +159,12 @@ class Solver:
             # grid_flow_direction = 1: export only (import = 0)
             self.solver.Add(
                 variables["grid_import_wh"][i]
-                <= self.toWh(battery_config.fuse_capacity_w)
+                <= self.toWh(float(battery_config.fuse_capacity_w))
                 * (1 - variables["grid_flow_direction"][i])
             )
             self.solver.Add(
                 variables["grid_export_wh"][i]
-                <= self.toWh(battery_config.fuse_capacity_w)
+                <= self.toWh(float(battery_config.fuse_capacity_w))
                 * variables["grid_flow_direction"][i]
             )
 
@@ -235,125 +211,6 @@ class Solver:
 
         objective.SetMinimization()
 
-    def _setup_ev_charging(
-        self,
-        production_w: dict[datetime, float],
-        battery_config: BatteryConfig,
-        variables: dict[str, dict[datetime, Any]],
-        initial_ev_soc_percent: float | None = None,
-        ev_ready_time: datetime | None = None,
-    ) -> None:
-        """Setup EV charging variables and constraints if EV charging is configured."""
-        # EV SOC evolution constraint - similar to battery SOC evolution
-        if initial_ev_soc_percent is not None and battery_config.has_ev_charging():
-            initial_ev_energy = (
-                initial_ev_soc_percent / 100
-            ) * battery_config.ev_max_capacity_wh
-        else:
-            initial_ev_energy = 0  # EV starts empty
-
-        previous_key = None
-        for i in production_w.keys():
-            if previous_key is None:
-                self.solver.Add(
-                    variables["ev_energy_wh"][i]
-                    == initial_ev_energy + self.toWh(variables["ev_charge_w"][i])
-                )
-            else:
-                self.solver.Add(
-                    variables["ev_energy_wh"][i]
-                    == variables["ev_energy_wh"][previous_key]
-                    + self.toWh(variables["ev_charge_w"][i])
-                )
-            previous_key = i
-
-        # Setup EV charging objectives based on ready time
-        if ev_ready_time and battery_config.has_ev_charging():
-            self._setup_ev_charging_objectives(
-                production_w, battery_config, variables, ev_ready_time
-            )
-
-    def _setup_ev_charging_objectives(
-        self,
-        production_w: dict[datetime, float],
-        battery_config: BatteryConfig,
-        variables: dict[str, dict[datetime, Any]],
-        ev_ready_time: datetime,
-    ) -> None:
-        """Setup EV charging objectives based on target ready time."""
-        timeslots = list(production_w.keys())
-        last_timeslot = timeslots[-1]
-
-        # Check if ready time is within current scheduling period
-        if ev_ready_time <= last_timeslot:
-            # Target is within period - add objective for that timeslot
-            target_soc_wh = 0.9 * battery_config.ev_max_capacity_wh  # 90% target
-            ev_deficit_penalty = 10.0  # 10 per percent below 90%
-
-            # Find the timeslot closest to ready time
-            target_timeslot = None
-            for timeslot in timeslots:
-                if timeslot >= ev_ready_time:
-                    target_timeslot = timeslot
-                    break
-
-            if target_timeslot is None:
-                target_timeslot = last_timeslot
-
-            # Create EV deficit variable only for the target timeslot
-            variables["ev_deficit_wh"][target_timeslot] = self.solver.NumVar(
-                0, self.solver.infinity(), f"ev_deficit_{target_timeslot}"
-            )
-
-            # Add constraint: ev_deficit_wh >= max(0, target_soc_wh - ev_energy_wh)
-            self.solver.Add(
-                variables["ev_deficit_wh"][target_timeslot]
-                >= target_soc_wh - variables["ev_energy_wh"][target_timeslot]
-            )
-            self.solver.Add(variables["ev_deficit_wh"][target_timeslot] >= 0)
-
-            # Add penalty for EV deficit at target time
-            self.solver.Objective().SetCoefficient(
-                variables["ev_deficit_wh"][target_timeslot], ev_deficit_penalty
-            )
-
-        else:
-            # Target is outside period - calculate target percentage based on time progress
-            first_timeslot = timeslots[0]
-            total_time_to_target = (
-                ev_ready_time - first_timeslot
-            ).total_seconds() / 3600  # hours
-            elapsed_time = (
-                last_timeslot - first_timeslot
-            ).total_seconds() / 3600  # hours
-
-            if total_time_to_target > 0:
-                progress_percentage = elapsed_time / total_time_to_target
-                target_soc_percent = min(
-                    90.0, progress_percentage * 90.0
-                )  # Scale target with progress
-                target_soc_wh = (
-                    target_soc_percent / 100
-                ) * battery_config.ev_max_capacity_wh
-                ev_deficit_penalty = 10.0  # 10 per percent below target
-
-                # Create EV deficit variable only for the last timeslot
-                variables["ev_deficit_wh"][last_timeslot] = self.solver.NumVar(
-                    0, self.solver.infinity(), f"ev_deficit_{last_timeslot}"
-                )
-
-                # Add constraint: ev_deficit_wh >= max(0, target_soc_wh - ev_energy_wh)
-                self.solver.Add(
-                    variables["ev_deficit_wh"][last_timeslot]
-                    >= target_soc_wh - variables["ev_energy_wh"][last_timeslot]
-                )
-                self.solver.Add(variables["ev_deficit_wh"][last_timeslot] >= 0)
-
-                # Add penalty for EV deficit at end of period
-                self.solver.Objective().SetCoefficient(
-                    variables["ev_deficit_wh"][last_timeslot], ev_deficit_penalty
-                )
-
     def _create_schedule(
         self,
         production_w: dict[datetime, float],
@@ -380,12 +237,8 @@ class Solver:
             expected_soc_percent = (expected_soc / battery_config.storage_size_wh) * 100
 
             # Get EV energy and calculate SOC percentage
-            ev_energy = variables["ev_energy_wh"][i].solution_value()
-            ev_soc_percent = (
-                (ev_energy / battery_config.ev_max_capacity_wh) * 100
-                if battery_config.has_ev_charging()
-                and battery_config.ev_max_capacity_wh > 0
-                else 0.0
+            ev_energy, ev_soc_percent = self.ev_manager.populate_ev_data(
+                variables, battery_config, i
             )
 
             timeslot = TimeslotItem(
@@ -461,15 +314,22 @@ class Solver:
         if time_slots == 0 or len(consumption_w) != time_slots:
             return None
 
+        # Initialize EV manager
+        self.ev_manager = EVChargingManager(self)
+
         # Setup variables
         variables = self._setup_variables(production_w, battery_config)
+
+        # Setup EV variables
+        ev_variables = self.ev_manager.setup_ev_variables(production_w, battery_config)
+        variables.update(ev_variables)
 
         # Setup constraints
         self._setup_constraints(production_w, consumption_w, battery_config, variables)
 
         # Setup EV charging if configured and ready time is specified
         if battery_config.has_ev_charging() and ev_ready_time is not None:
-            self._setup_ev_charging(
+            self.ev_manager.setup_ev_charging(
                 production_w,
                 battery_config,
                 variables,
