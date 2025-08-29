@@ -8,11 +8,15 @@ from typing import Any, List, Optional
 import pandas as pd
 from influxdb import InfluxDBClient
 
+from config.influxdb_env import get_config_path
+
 
 class InfluxDBConfig:
     """Configuration class for InfluxDB connection"""
 
-    def __init__(self, config_path: str = "config/influxdb_config.json"):
+    def __init__(self, config_path: str | None = None):
+        if config_path is None:
+            config_path = get_config_path()
         self.config_path = config_path
         self.config = self._load_config()
 
@@ -247,17 +251,19 @@ class InfluxDBClientWrapper:
 
 
 def get_initial_consumption_values(
-    config_path: str = "config/influxdb_config.json",
+    config_path: str | None = None,
 ) -> List[float]:
     """
     Convenience function to get initial consumption values from InfluxDB 1.x
 
     Args:
-        config_path: Path to InfluxDB config file
+        config_path: Path to InfluxDB config file (defaults to current environment)
 
     Returns:
         List of consumption values in chronological order (oldest to newest)
     """
+    if config_path is None:
+        config_path = get_config_path()
     config = InfluxDBConfig(config_path)
 
     with InfluxDBClientWrapper(config) as client:

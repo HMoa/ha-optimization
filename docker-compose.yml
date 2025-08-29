@@ -1,0 +1,43 @@
+services:
+  influxdb:
+    image: influxdb:1.8
+    container_name: ha-optimizer-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=adminpassword
+      - INFLUXDB_DB=homeassistant
+      - INFLUXDB_USER=optimizer
+      - INFLUXDB_USER_PASSWORD=tuggummi
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+      - ./scripts/init-influxdb.sh:/docker-entrypoint-initdb.d/init-influxdb.sh:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  chronograf:
+    image: chronograf:1.9.4
+    container_name: ha-optimizer-chronograf
+    ports:
+      - "8888:8888"
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_USERNAME=optimizer
+      - INFLUXDB_PASSWORD=tuggummi
+    volumes:
+      - chronograf_data:/var/lib/chronograf
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+
+volumes:
+  influxdb_data:
+    driver: local
+  chronograf_data:
+    driver: local

@@ -10,6 +10,7 @@ alwaysApply: false
 - Swedish market has asymmetric pricing: Buy price = spot + 0.4 + 0.55, Sell price = spot + 0.08 + 0.6
 - Net difference: Buy price is ~0.27 kr/kWh higher than sell price
 - Battery efficiency: 95% charging efficiency (eta_c = 0.95) must be considered
+- Effekttariff: Peak power cost component (typically 200-400 kr/kW per month) based on highest 1-hour average consumption
 
 ## Battery Management
 - Target SOC: 30% (comfortable buffer)
@@ -37,6 +38,16 @@ alwaysApply: false
 - Timezone handling: EV ready time automatically made timezone-aware using local timezone
 - Conditional activation: EV charging logic only runs when ev_ready_time is provided
 
+## Effekttariff Support
+- Peak power cost component: Based on highest average power consumption over 1-hour periods
+- Cost structure: Configurable cost per kW (default 300 kr/kW per month)
+- Implementation: EffekttariffManager class handles all peak power logic
+- Variables: peak_power_w (global maximum), power_consumption_w (per timeslot)
+- Constraints: peak_power_w >= power_consumption_w for all timeslots
+- Objective: Minimize peak_power_w * effekttariff_cost_per_kw
+- Power calculation: grid_import_w + battery_discharge_w (converted from Wh to W)
+- TODO: Implement proper 1-hour rolling window calculation instead of single timeslot maximum
+
 ## Optimization Structure
 - Variables: grid_import, grid_export, grid_flow_direction, battery_charge, battery_discharge, battery_energy, soc_deficit, ev_energy_wh, ev_charge_w, ev_deficit_wh
 - Constraints: energy_balance, battery_state, mutual_exclusion, soc_penalty, ev_soc_evolution, ev_deficit_penalty, grid_mutual_exclusion
@@ -45,6 +56,7 @@ alwaysApply: false
 - EV variables: Always present for energy balance, bounds depend on configuration
 - EV deficit: Only created for target timeslot (ready time or end of period)
 - EV pricing: Uses configurable max_price per kWh deficiency, not arbitrary penalty
+- Effekttariff: Peak power tracking with configurable cost per kW (default 300 kr/kW per month)
 - Unit conversion: ev_charge_w (Watts) converted to energy using toWh() for energy balance and SOC evolution
 - Fuse capacity: Individual bounds on grid_import_wh and grid_export_wh (0 to toWh(fuse_capacity_w))
 - Grid mutual exclusion: Binary variable ensures import and export never happen simultaneously
@@ -60,7 +72,7 @@ alwaysApply: false
 ## Implementation Patterns
 - Separate setup methods: _setup_variables(), _setup_constraints(), _setup_objective()
 - Use internal methods (underscore prefix) for implementation details
-- Modular design: EV charging logic separated into EVChargingManager class
+- Modular design: EV charging logic separated into EVChargingManager class, effekttariff logic in EffekttariffManager
 - Strict typing with proper annotations
 - Linear optimization with GLOP solver for speed
 - Allow small numerical tolerance in tests (floating point precision)

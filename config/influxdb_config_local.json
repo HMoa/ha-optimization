@@ -1,0 +1,11 @@
+{
+  "url": "http://localhost:8086",
+  "username": "optimizer",
+  "password": "tuggummi",
+  "database": "homeassistant",
+  "measurement": "power.consumed",
+  "field": "value",
+  "time_window_minutes": 30,
+  "aggregation_window_minutes": 5,
+  "data_points": 6
+}
