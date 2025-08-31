@@ -60,48 +60,48 @@ chronograf-logs:
 influxdb-shell:
 	docker exec -it ha-optimizer-influxdb influx
 
-# Backup production data
-backup:
-	python scripts/backup_influxdb.py
-
 # Backup all measurements from production
 backup-all:
-	python scripts/backup_all_measurements.py
+	python scripts/influx-sync/backup_all.py
 
 # List available measurements
 list-measurements:
-	python scripts/backup_all_measurements.py --list-measurements
-
-# Restore data to local InfluxDB
-restore:
-	python scripts/restore_influxdb.py
+	python scripts/influx-sync/backup_all.py --list-measurements
 
 # Restore all measurements to local InfluxDB
 restore-all:
-	python scripts/restore_all_measurements.py
+	python scripts/influx-sync/restore_all.py
 
 # List available measurements in backup
 list-backup-measurements:
-	python scripts/restore_all_measurements.py --list-available
+	python scripts/influx-sync/restore_all.py --list-available
 
 # Sync new data from production to local
 sync:
-	python scripts/sync_influxdb.py
+	python scripts/influx-sync/sync_all.py
+
+# Check sync status
+sync-status:
+	python scripts/influx-sync/status.py
+
+# Dry run sync (see what would be synced)
+sync-dry-run:
+	python scripts/influx-sync/sync_all.py --dry-run
 
 # Full setup: start InfluxDB, backup production data, and restore to local
 setup-local-influxdb: influxdb-up
 	@echo "Backing up production data..."
-	@python scripts/backup_influxdb.py
+	@python scripts/influx-sync/backup_all.py
 	@echo "Restoring data to local InfluxDB..."
-	@python scripts/restore_influxdb.py
+	@python scripts/influx-sync/restore_all.py
 	@echo "Local InfluxDB setup complete!"
 
 # Full setup with all measurements: start InfluxDB, backup all production data, and restore to local
 setup-local-influxdb-all: influxdb-up
 	@echo "Backing up all production measurements..."
-	@python scripts/backup_all_measurements.py
+	@python scripts/influx-sync/backup_all.py
 	@echo "Restoring all data to local InfluxDB..."
-	@python scripts/restore_all_measurements.py
+	@python scripts/influx-sync/restore_all.py
 	@echo "Local InfluxDB setup complete with all measurements!"
 
 # Test local InfluxDB setup
